@@ -1,0 +1,34 @@
+import Link from 'next/link';
+import { XCircle, Calendar, Home } from 'lucide-react';
+
+export default function PaymentCancelledPage() {
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
+      <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl border border-gray-100 p-10 text-center">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <XCircle size={40} className="text-red-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">Payment Cancelled</h1>
+        <p className="text-gray-600 mb-8">
+          Your payment was not completed. Your appointment may still be saved as pending — you can retry payment or contact support.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/appointment"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition"
+          >
+            <Calendar size={18} />
+            Try Again
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition"
+          >
+            <Home size={18} />
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
