@@ -97,15 +97,18 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => (
   </div>
 );
 
-const DoctorsContent = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+const DoctorsContent = ({ initialDoctors }: { initialDoctors?: Doctor[] }) => {
+  const [doctors, setDoctors] = useState<Doctor[]>(initialDoctors ?? []);
   const [search, setSearch] = useState('');
   const [department, setDepartment] = useState<string>(ALL_DEPARTMENTS);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialDoctors);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    // Skip client fetch when doctors were server-rendered (unless user hits Retry).
+    if (initialDoctors && reloadKey === 0) return;
+
     let active = true;
 
     const load = async () => {
@@ -127,7 +130,7 @@ const DoctorsContent = () => {
     return () => {
       active = false;
     };
-  }, [reloadKey]);
+  }, [reloadKey, initialDoctors]);
 
   const departments = useMemo(() => getDepartments(doctors), [doctors]);
 

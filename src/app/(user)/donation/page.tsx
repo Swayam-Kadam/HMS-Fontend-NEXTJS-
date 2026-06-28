@@ -1,17 +1,25 @@
-import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import DonationContent from '@/components/donation/DonationContent';
+import { fetchDonorsServer } from '@/lib/server/donations';
 import DonationImage from '../../../../public/images/about/donation.jpg';
 
-const DonationPage = () => {
+export const metadata: Metadata = {
+  title: 'Donation Registry | Apollo Hospital',
+  description:
+    'View registered blood and heart donors at Apollo Hospital. Join our donation registry and help save lives.',
+};
+
+export default async function DonationPage() {
+  const { blood, heart } = await fetchDonorsServer();
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
       <section className="relative h-56 sm:h-64 md:h-72 overflow-hidden">
         <Image
           src={DonationImage}
-          alt="Apollo Hospital"
+          alt="Apollo Hospital donation registry"
           fill
           priority
           className="object-cover"
@@ -39,9 +47,7 @@ const DonationPage = () => {
         </div>
       </section>
 
-      <DonationContent />
+      <DonationContent initialBloodDonors={blood} initialHeartDonors={heart} />
     </div>
   );
-};
-
-export default DonationPage;
+}

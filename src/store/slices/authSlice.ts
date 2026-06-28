@@ -25,9 +25,16 @@ export const login = createAsyncThunk(
   }
 );
 
+export interface SignupPayload {
+  name: string;
+  email: string;
+  password: string;
+  cpassword: string;
+}
+
 export const signup = createAsyncThunk(
   `auth/signup`,
-  async (payload, thunkAPI) => { 
+  async (payload: SignupPayload, thunkAPI) => { 
     try {
       const response = await axiosReact.post(SIGNUP,payload); 
       return response; 

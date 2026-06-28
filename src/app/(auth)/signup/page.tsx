@@ -1,10 +1,10 @@
 "use client";
 
-import { Formik, Form } from "formik";
+import { Formik, Form, type FormikHelpers } from "formik";
 import { signupSchema } from "@/utils/validation";
 import FormInput from "@/components/ui/FormInput";
 import Link from "next/link";
-import { useDispatch } from "react-redux";
+import { useAppDispatch } from "@/store/hooks";
 import { toast, ToastContainer } from "react-toastify";
 import { signup } from "@/store/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,7 +18,7 @@ interface SignupValues {
 }
 
 const SignupPage = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const initialValues: SignupValues = {
@@ -28,26 +28,29 @@ const SignupPage = () => {
     confirmPassword: "",
   };
 
-  const handleSubmit = async (values: SignupValues, { resetForm }) => {
-    let payload = {
+  const handleSubmit = async (
+    values: SignupValues,
+    { resetForm }: FormikHelpers<SignupValues>
+  ) => {
+    const payload = {
       name: values.name,
       email: values.email,
       password: values.password,
-      cpassword: values.confirmPassword
+      cpassword: values.confirmPassword,
     };
-    
-    dispatch(signup(payload)).then((res: any) => {
-      console.log(res);
-      if (res.payload.status === 200 || res.payload.status === 201) {
+
+    try {
+      const res = await dispatch(signup(payload)).unwrap();
+      if (res.status === 200 || res.status === 201) {
         toast.success("Account created successfully! Please login.");
         resetForm();
-        
-        // Redirect to login after 2 seconds
         setTimeout(() => {
           router.push('/login');
         }, 2000);
       }
-    });
+    } catch {
+      // Error toast is handled in the auth thunk.
+    }
   };
 
   // Animation variants

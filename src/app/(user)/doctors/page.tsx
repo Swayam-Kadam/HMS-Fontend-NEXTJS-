@@ -1,17 +1,25 @@
-import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import DoctorsContent from '@/components/doctors/DoctorsContent';
+import { fetchDoctorsServer } from '@/lib/server/doctors';
 import DoctorImage from '../../../../public/images/about/doctors.webp';
 
-const DoctorsPage = () => {
+export const metadata: Metadata = {
+  title: 'Our Doctors | Apollo Hospital',
+  description:
+    'Meet the experienced specialists at Apollo Hospital. Browse doctors by department and book an appointment online.',
+};
+
+export default async function DoctorsPage() {
+  const initialDoctors = await fetchDoctorsServer();
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero */}
       <section className="relative h-56 sm:h-64 md:h-72 overflow-hidden">
         <Image
           src={DoctorImage}
-          alt="Apollo Hospital"
+          alt="Apollo Hospital doctors"
           fill
           priority
           className="object-cover"
@@ -39,9 +47,7 @@ const DoctorsPage = () => {
         </div>
       </section>
 
-      <DoctorsContent />
+      <DoctorsContent initialDoctors={initialDoctors} />
     </div>
   );
-};
-
-export default DoctorsPage;
+}

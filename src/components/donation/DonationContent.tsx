@@ -85,16 +85,27 @@ const DonorCard = ({ donor, accent }: { donor: Donor; accent: 'blood' | 'heart' 
   );
 };
 
-const DonationContent = () => {
+interface DonationContentProps {
+  initialBloodDonors?: Donor[];
+  initialHeartDonors?: Donor[];
+}
+
+const DonationContent = ({
+  initialBloodDonors,
+  initialHeartDonors,
+}: DonationContentProps) => {
+  const hasInitialData = initialBloodDonors != null && initialHeartDonors != null;
   const [activeTab, setActiveTab] = useState<TabId>('blood');
   const [search, setSearch] = useState('');
-  const [bloodDonors, setBloodDonors] = useState<Donor[]>([]);
-  const [heartDonors, setHeartDonors] = useState<Donor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [bloodDonors, setBloodDonors] = useState<Donor[]>(initialBloodDonors ?? []);
+  const [heartDonors, setHeartDonors] = useState<Donor[]>(initialHeartDonors ?? []);
+  const [loading, setLoading] = useState(!hasInitialData);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    if (hasInitialData && reloadKey === 0) return;
+
     let active = true;
 
     const load = async () => {
@@ -120,7 +131,7 @@ const DonationContent = () => {
     return () => {
       active = false;
     };
-  }, [reloadKey]);
+  }, [reloadKey, hasInitialData]);
 
   const currentDonors = activeTab === 'blood' ? bloodDonors : heartDonors;
 

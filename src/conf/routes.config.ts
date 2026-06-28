@@ -19,6 +19,8 @@ export const AUTH_REDIRECT_ROUTES = ['/login', '/signup'];
 export const ADMIN_ROUTES = [
   '/dashboard',
   '/add-doctor',
+  '/manage-doctor',
+  '/manage-user',
   '/manage-appointment',
   '/user-messages',
   '/contact-messages',
