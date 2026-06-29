@@ -42,7 +42,7 @@ export const mapApiDoctor = (doctor: ApiDoctor): Doctor => ({
   fullName: `${doctor.f_name} ${doctor.l_name}`.trim(),
   department: doctor.department,
   email: doctor.email,
-  imageUrl: buildDoctorImageUrl(doctor.img),
+  imageUrl: doctor.img ?? '',
   phone: doctor.number != null ? String(doctor.number) : '',
   nic: doctor.NIC != null ? String(doctor.NIC) : '',
   dob: doctor.DOB || '',
