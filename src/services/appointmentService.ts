@@ -227,6 +227,7 @@ export interface PaginatedAppointments {
   currentPage: number;
   totalPages: number;
   limit: number;
+  stats: AppointmentListStats | null;
 }
 
 interface ApiPaginatedResponse {
@@ -264,6 +265,11 @@ export const fetchUserAppointments = async (
 
   return {
     appointments: list.map((item, index) => mapApiAppointmentToProfile(item, index)),
+    stats: data?.stats ?? {
+      pending: 0,
+      accepted: 0,
+      rejected: 0,
+    },
     total: data?.total ?? list.length,
     currentPage: data?.currentPage ?? page,
     totalPages: data?.totalPages ?? 1,

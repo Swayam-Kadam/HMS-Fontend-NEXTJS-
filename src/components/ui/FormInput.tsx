@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Field, ErrorMessage } from "formik";
+import { Field, ErrorMessage, type FieldProps } from "formik";
 import { Eye, EyeOff } from "lucide-react";
 
 interface Props {
@@ -21,7 +21,7 @@ const FormInput = ({ name, type, placeholder, min, onChange }: Props) => {
     <div className="mb-4">
       <div className="relative">
         <Field name={name}>
-          {({ field }: { field: React.ComponentProps<'input'> }) => (
+          {({ field }: FieldProps) => (
             <input
               {...field}
               type={inputType}

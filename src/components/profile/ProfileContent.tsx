@@ -27,6 +27,7 @@ import EditProfileModal from './EditProfileModal';
 import EditAppointmentModal from './EditAppointmentModal';
 import { fetchUser, updateUser, type UserProfile } from '@/services/profileService';
 import {
+  AppointmentListStats,
   cancelAppointment,
   fetchUserAppointments,
   mapApiAppointmentToProfile,
@@ -163,6 +164,7 @@ const ProfileContent = () => {
     tag: 'General' as (typeof MESSAGE_TAGS)[number],
     rating: 0,
   });
+  const [appointmentStats, setAppointmentStats] = useState<AppointmentListStats | null>(null);
 
   useAuthenticatedEffect(() => {
     let cancelled = false;
@@ -206,6 +208,7 @@ const ProfileContent = () => {
           setAppointments(data.appointments);
           setAppointmentTotal(data.total);
           setAppointmentTotalPages(data.totalPages);
+          setAppointmentStats(data.stats);
         }
       } catch {
         if (!cancelled) {
@@ -278,13 +281,14 @@ const ProfileContent = () => {
   const stats = useMemo(
     () => ({
       total: appointmentTotal,
-      rejected: appointments.filter((a) => a.status === 'rejected').length,
-      pending: appointments.filter((a) => a.status === 'pending').length,
-      accepted: appointments.filter((a) => a.status === 'accepted').length,
+      rejected: appointmentStats?.rejected ?? 0,
+      pending: appointmentStats?.pending ?? 0,
+      accepted: appointmentStats?.accepted ?? 0,
       messages: messageTotal,
     }),
-    [appointments, appointmentTotal, messageTotal]
+    [appointments, appointmentTotal, messageTotal, appointmentStats]
   );
+
 
   const handleProfileSave = async (formData: FormData) => {
     setProfileSaving(true);
