@@ -1,12 +1,14 @@
-import type { Metadata } from 'next';
 import HomeContent from '@/components/home/HomeContent';
+import { buildPageMetadata } from '@/lib/metadata';
 import { fetchDoctorsServer } from '@/lib/server/doctors';
 
-export const metadata: Metadata = {
-  title: 'Apollo Hospital | Exceptional Healthcare',
+export const metadata = buildPageMetadata({
+  title: 'Exceptional Healthcare',
   description:
     'Apollo Hospital provides compassionate, advanced medical care with expert doctors, modern facilities, and 24/7 emergency services.',
-};
+  path: '/',
+  image: '/images/Apollo-Hospital.webp',
+});
 
 export default async function HomePage() {
   const doctors = await fetchDoctorsServer();

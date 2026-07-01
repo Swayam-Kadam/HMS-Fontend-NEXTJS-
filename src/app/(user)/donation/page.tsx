@@ -1,15 +1,17 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import DonationContent from '@/components/donation/DonationContent';
+import { buildPageMetadata } from '@/lib/metadata';
 import { fetchDonorsServer } from '@/lib/server/donations';
 import DonationImage from '../../../../public/images/about/donation.jpg';
 
-export const metadata: Metadata = {
-  title: 'Donation Registry | Apollo Hospital',
+export const metadata = buildPageMetadata({
+  title: 'Donation Registry',
   description:
     'View registered blood and heart donors at Apollo Hospital. Join our donation registry and help save lives.',
-};
+  path: '/donation',
+  image: '/images/about/donation.jpg',
+});
 
 export default async function DonationPage() {
   const { blood, heart } = await fetchDonorsServer();

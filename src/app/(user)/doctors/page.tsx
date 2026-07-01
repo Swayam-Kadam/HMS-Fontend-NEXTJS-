@@ -1,15 +1,17 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import DoctorsContent from '@/components/doctors/DoctorsContent';
+import { buildPageMetadata } from '@/lib/metadata';
 import { fetchDoctorsServer } from '@/lib/server/doctors';
 import DoctorImage from '../../../../public/images/about/doctors.webp';
 
-export const metadata: Metadata = {
-  title: 'Our Doctors | Apollo Hospital',
+export const metadata = buildPageMetadata({
+  title: 'Our Doctors',
   description:
     'Meet the experienced specialists at Apollo Hospital. Browse doctors by department and book an appointment online.',
-};
+  path: '/doctors',
+  image: '/images/about/doctors.webp',
+});
 
 export default async function DoctorsPage() {
   const initialDoctors = await fetchDoctorsServer();
