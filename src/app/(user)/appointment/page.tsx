@@ -7,6 +7,7 @@ export const metadata = buildPageMetadata({
     'Schedule your visit with Apollo Hospital expert doctors. Quick and convenient online appointment booking.',
   path: '/appointment',
   image: '/images/about/appointment.jpg',
+  private: true,
 });
 
 export default function AppointmentPage() {

@@ -45,14 +45,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={roboto.className}
-      >
-        {/* <UserHeader /> */}
-       <Providers>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+      <body className={roboto.className}>
+        <Providers>
+          <AuthProvider>{children}</AuthProvider>
         </Providers>
       </body>
     </html>

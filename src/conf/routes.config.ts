@@ -2,12 +2,12 @@ export type UserRole = 'user' | 'admin' | null;
 
 export const PUBLIC_ROUTES = [
   '/',
+  '/doctors',
   '/details',
   '/donation',
   '/contact-us',
   '/login',
   '/signup',
-  '/forgot-password',
   '/success',
   '/unsuccess',
 ];

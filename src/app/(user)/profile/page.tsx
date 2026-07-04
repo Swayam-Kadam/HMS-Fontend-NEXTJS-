@@ -2,7 +2,15 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProfileContent from '@/components/profile/ProfileContent';
+import { buildPageMetadata } from '@/lib/metadata';
 import HospitalImage from '../../../../public/images/Apollo-Hospital.webp';
+
+export const metadata = buildPageMetadata({
+  title: 'My Profile',
+  description: 'Manage your Apollo Hospital profile, appointments, and messages.',
+  path: '/profile',
+  private: true,
+});
 
 const ProfilePage = () => {
   return (

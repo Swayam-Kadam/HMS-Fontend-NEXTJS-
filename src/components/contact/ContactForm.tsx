@@ -2,7 +2,7 @@
 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { Send } from 'lucide-react';
 import FormInput from '@/components/ui/FormInput';
 import { sendContactMessage } from '@/services/contactService';
@@ -54,7 +54,6 @@ const ContactForm = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
       <Formik initialValues={initialValues} validationSchema={contactSchema} onSubmit={handleSubmit}>
         {({ isSubmitting }) => (
           <Form className="space-y-6">

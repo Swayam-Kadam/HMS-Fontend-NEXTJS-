@@ -30,6 +30,30 @@ export async function loginRequest(email: string, password: string) {
   return data as { ok: true; role: UserRole };
 }
 
+export interface SignupPayload {
+  name: string;
+  email: string;
+  password: string;
+  cpassword: string;
+}
+
+export async function signupRequest(payload: SignupPayload) {
+  const res = await fetch('/api/proxy/auth/createuser/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(data.error || data.message || 'Signup failed');
+  }
+
+  return data;
+}
+
 export async function logoutRequest(): Promise<void> {
   await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
 }

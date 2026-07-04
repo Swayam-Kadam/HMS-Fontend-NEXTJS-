@@ -25,13 +25,8 @@ import {
 import Pagination from '@/components/common/Pagination';
 import EditProfileModal from './EditProfileModal';
 import EditAppointmentModal from './EditAppointmentModal';
-import { fetchUser, updateUser, type UserProfile } from '@/services/profileService';
+import { type UserProfile } from '@/services/profileService';
 import {
-  AppointmentListStats,
-  cancelAppointment,
-  fetchUserAppointments,
-  mapApiAppointmentToProfile,
-  normalizeAppointmentStatus,
   parseAppointmentError,
   type ApiAppointment,
   type AppointmentStatusFilter,
@@ -39,15 +34,21 @@ import {
 } from '@/services/appointmentService';
 import {
   MESSAGE_TAGS,
-  fetchUserMessages,
-  sendMessage,
   type MessageTagFilter,
   type UserMessage,
 } from '@/services/messageService';
-import { toast, ToastContainer } from 'react-toastify';
-import { useAuthenticatedEffect } from '@/hooks/useAuthenticatedEffect';
+import { toast } from 'react-toastify';
 import Swal from '@/lib/swal';
 import { toastError, toastSuccess } from '@/lib/swal';
+import {
+  useCancelAppointmentMutation,
+  useMessageCountQuery,
+  useProfileQuery,
+  useSendMessageMutation,
+  useUpdateProfileMutation,
+  useUserAppointmentsQuery,
+  useUserMessagesQuery,
+} from '@/hooks/queries';
 
 import PatientImage from '../../../public/images/about/patient.jpg';
 import HospitalImage from '../../../public/images/Apollo-Hospital.webp';
@@ -138,24 +139,12 @@ const StarRating = ({
 );
 
 const ProfileContent = () => {
-  const [profile, setProfile] = useState<UserProfile>(emptyProfile);
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [profileSaving, setProfileSaving] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
-  const [appointmentTotal, setAppointmentTotal] = useState(0);
-  const [appointmentTotalPages, setAppointmentTotalPages] = useState(1);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [actionAppointmentId, setActionAppointmentId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
-  const [messages, setMessages] = useState<UserMessage[]>([]);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [messageTotal, setMessageTotal] = useState(0);
-  const [messageTotalPages, setMessageTotalPages] = useState(1);
   const [messagePage, setMessagePage] = useState(1);
   const [messageTagFilter, setMessageTagFilter] = useState<MessageTagFilter>('all');
-  const [messageSubmitting, setMessageSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [appointmentPage, setAppointmentPage] = useState(1);
   const [messageForm, setMessageForm] = useState({
@@ -164,119 +153,40 @@ const ProfileContent = () => {
     tag: 'General' as (typeof MESSAGE_TAGS)[number],
     rating: 0,
   });
-  const [appointmentStats, setAppointmentStats] = useState<AppointmentListStats | null>(null);
 
-  useAuthenticatedEffect(() => {
-    let cancelled = false;
+  const profileQuery = useProfileQuery();
+  const profile = profileQuery.data ?? emptyProfile;
+  const profileLoading = profileQuery.isLoading;
 
-    const loadProfile = async () => {
-      try {
-        const user = await fetchUser();
-        if (!cancelled) {
-          setProfile(user);
-        }
-      } catch {
-        if (!cancelled) {
-          toast.error('Failed to load profile');
-        }
-      } finally {
-        if (!cancelled) {
-          setProfileLoading(false);
-        }
-      }
-    };
+  const appointmentsQuery = useUserAppointmentsQuery(
+    appointmentPage,
+    APPOINTMENTS_PER_PAGE,
+    statusFilter
+  );
+  const appointments = appointmentsQuery.data?.appointments ?? [];
+  const appointmentsLoading = appointmentsQuery.isLoading;
+  const appointmentTotal = appointmentsQuery.data?.total ?? 0;
+  const appointmentTotalPages = appointmentsQuery.data?.totalPages ?? 1;
+  const appointmentStats = appointmentsQuery.data?.stats ?? null;
 
-    loadProfile();
+  const messageCountQuery = useMessageCountQuery();
+  const messageTotal = messageCountQuery.data ?? 0;
 
-    return () => {
-      cancelled = true;
-    };
-  });
+  const messagesQuery = useUserMessagesQuery(
+    messagePage,
+    MESSAGES_PER_PAGE,
+    messageTagFilter,
+    activeTab === 'messages'
+  );
+  const messages = messagesQuery.data?.messages ?? [];
+  const messagesLoading = messagesQuery.isLoading;
+  const messageTotalPages = messagesQuery.data?.totalPages ?? 1;
 
-  useAuthenticatedEffect(() => {
-    let cancelled = false;
-
-    const loadAppointments = async () => {
-      setAppointmentsLoading(true);
-      try {
-        const data = await fetchUserAppointments(
-          appointmentPage,
-          APPOINTMENTS_PER_PAGE,
-          statusFilter
-        );
-        if (!cancelled) {
-          setAppointments(data.appointments);
-          setAppointmentTotal(data.total);
-          setAppointmentTotalPages(data.totalPages);
-          setAppointmentStats(data.stats);
-        }
-      } catch {
-        if (!cancelled) {
-          toast.error('Failed to load appointments');
-        }
-      } finally {
-        if (!cancelled) {
-          setAppointmentsLoading(false);
-        }
-      }
-    };
-
-    loadAppointments();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appointmentPage, statusFilter]);
-
-  useAuthenticatedEffect(() => {
-    let cancelled = false;
-
-    fetchUserMessages(1, 1, 'all')
-      .then((data) => {
-        if (!cancelled) setMessageTotal(data.total);
-      })
-      .catch(() => {});
-
-    return () => {
-      cancelled = true;
-    };
-  });
-
-  useAuthenticatedEffect(() => {
-    if (activeTab !== 'messages') return;
-
-    let cancelled = false;
-
-    const loadMessages = async () => {
-      setMessagesLoading(true);
-      try {
-        const data = await fetchUserMessages(
-          messagePage,
-          MESSAGES_PER_PAGE,
-          messageTagFilter
-        );
-        if (!cancelled) {
-          setMessages(data.messages);
-          setMessageTotal(data.total);
-          setMessageTotalPages(data.totalPages);
-        }
-      } catch {
-        if (!cancelled) {
-          toast.error('Failed to load messages');
-        }
-      } finally {
-        if (!cancelled) {
-          setMessagesLoading(false);
-        }
-      }
-    };
-
-    loadMessages();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeTab, messagePage, messageTagFilter]);
+  const updateProfileMutation = useUpdateProfileMutation();
+  const cancelAppointmentMutation = useCancelAppointmentMutation();
+  const sendMessageMutation = useSendMessageMutation();
+  const profileSaving = updateProfileMutation.isPending;
+  const messageSubmitting = sendMessageMutation.isPending;
 
   const stats = useMemo(
     () => ({
@@ -291,10 +201,8 @@ const ProfileContent = () => {
 
 
   const handleProfileSave = async (formData: FormData) => {
-    setProfileSaving(true);
     try {
-      const saved = await updateUser(profile.id, formData);
-      setProfile(saved);
+      await updateProfileMutation.mutateAsync({ id: profile.id, formData });
       toast.success('Profile updated successfully');
       setEditModalOpen(false);
     } catch (error) {
@@ -302,8 +210,6 @@ const ProfileContent = () => {
         (error as { response?: { data?: { error?: string } } })?.response?.data?.error ||
         'Failed to update profile';
       toast.error(message);
-    } finally {
-      setProfileSaving(false);
     }
   };
 
@@ -329,14 +235,7 @@ const ProfileContent = () => {
 
     setActionAppointmentId(appointment.id);
     try {
-      const updated = await cancelAppointment(appointment.id);
-      setAppointments((prev) =>
-        prev.map((item) =>
-          item.id === appointment.id
-            ? { ...item, status: normalizeAppointmentStatus(updated.status) }
-            : item
-        )
-      );
+      await cancelAppointmentMutation.mutateAsync(appointment.id);
       toastSuccess('Appointment cancelled successfully');
     } catch (error) {
       const { message, isAuthError } = parseAppointmentError(error);
@@ -349,12 +248,8 @@ const ProfileContent = () => {
     }
   };
 
-  const handleAppointmentUpdated = (updated: ApiAppointment) => {
-    setAppointments((prev) =>
-      prev.map((item) =>
-        item.id === updated._id ? mapApiAppointmentToProfile(updated) : item
-      )
-    );
+  const handleAppointmentUpdated = (_updated: ApiAppointment) => {
+    appointmentsQuery.refetch();
   };
 
   const handleMessageTagFilterChange = (tag: MessageTagFilter) => {
@@ -377,9 +272,8 @@ const ProfileContent = () => {
       return;
     }
 
-    setMessageSubmitting(true);
     try {
-      await sendMessage({
+      await sendMessageMutation.mutateAsync({
         title,
         message: body,
         tag: messageForm.tag,
@@ -389,11 +283,6 @@ const ProfileContent = () => {
       setMessageForm({ title: '', message: '', tag: 'General', rating: 0 });
       setMessagePage(1);
       setMessageTagFilter('all');
-
-      const data = await fetchUserMessages(1, MESSAGES_PER_PAGE, 'all');
-      setMessages(data.messages);
-      setMessageTotal(data.total);
-      setMessageTotalPages(data.totalPages);
     } catch (error) {
       const errData = (error as { response?: { data?: unknown } })?.response?.data;
       const message =
@@ -401,15 +290,11 @@ const ProfileContent = () => {
         (errData as { error?: string })?.error ||
         'Failed to send message';
       toastError(message);
-    } finally {
-      setMessageSubmitting(false);
     }
   };
 
   return (
     <div className="container mx-auto px-4 max-w-7xl -mt-16 sm:-mt-20 relative z-10 pb-16">
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       {profileLoading ? (
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-16 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-gray-500">

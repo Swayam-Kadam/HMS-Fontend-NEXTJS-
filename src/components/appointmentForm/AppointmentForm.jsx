@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { loadStripe } from "@stripe/stripe-js";
 import FormInput from "../ui/FormInput";
 import conf from "@/conf/conf";
@@ -27,10 +27,10 @@ import {
   createCheckoutSession,
 } from "@/services/appointmentService";
 import {
-  fetchDoctors,
   getDepartments,
   getDoctorsByDepartment,
 } from "@/services/doctorService";
+import { useDoctorsQuery } from "@/hooks/queries";
 import { getTodayInputValue, isPastTimeSlot } from "@/lib/dateTime";
 import {
   preferredDateField,
@@ -101,35 +101,13 @@ const initialValues = {
 
 // ─── Component ───────────────────────────────────────────────────────────────
 const AppointmentForm = () => {
-  const [doctors, setDoctors] = useState([]);
-  const [doctorsLoading, setDoctorsLoading] = useState(true);
+  const { data: doctors = [], isLoading: doctorsLoading, isError } = useDoctorsQuery();
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadDoctors = async () => {
-      try {
-        const data = await fetchDoctors();
-        if (!cancelled) {
-          setDoctors(data);
-        }
-      } catch {
-        if (!cancelled) {
-          toast.error("Failed to load doctors. Please refresh the page.");
-        }
-      } finally {
-        if (!cancelled) {
-          setDoctorsLoading(false);
-        }
-      }
-    };
-
-    loadDoctors();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (isError) {
+      toast.error("Failed to load doctors. Please refresh the page.");
+    }
+  }, [isError]);
 
   const departments = useMemo(() => getDepartments(doctors), [doctors]);
 
@@ -201,7 +179,6 @@ const AppointmentForm = () => {
 
   return (
     <div className="lg:col-span-2">
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
       <div className="bg-white rounded-2xl shadow-lg p-8">
         <h2 className="text-2xl font-bold text-gray-800 mb-6">
           Book Your Appointment

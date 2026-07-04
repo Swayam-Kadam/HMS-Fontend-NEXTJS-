@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   Star,
   Search,
@@ -21,11 +21,12 @@ import {
   MESSAGE_TAGS,
   MessageReplyStatusFilter,
   MessageTagFilter,
-  fetchAdminMessages,
-  replyToMessage,
   parseMessageError,
-  type MessageListStats,
 } from '@/services/messageService';
+import {
+  useAdminMessagesQuery,
+  useReplyToMessageMutation,
+} from '@/hooks/queries';
 
 const PAGE_SIZE = 10;
 
@@ -58,58 +59,45 @@ const StarRating = ({ value }: { value: number }) => (
 );
 
 const UserMessagesContent = () => {
-  const [messages, setMessages] = useState<AdminMessage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [tag, setTag] = useState<MessageTagFilter>('all');
   const [replyStatus, setReplyStatus] = useState<MessageReplyStatusFilter>('all');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [selected, setSelected] = useState<AdminMessage | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [submittingReply, setSubmittingReply] = useState(false);
-  const [stats, setStats] = useState<MessageListStats | null>(null);
-  // Debounce the search input (400ms) + trim leading/trailing spaces.
+
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+  } = useAdminMessagesQuery(page, PAGE_SIZE, tag, replyStatus, debouncedSearch);
+  const replyMutation = useReplyToMessageMutation();
+
+  const messages = data?.messages ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const stats = data?.stats ?? null;
+  const submittingReply = replyMutation.isPending;
+
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search.trim()), 400);
     return () => clearTimeout(handle);
   }, [search]);
 
-  const loadMessages = async (
-    targetPage: number,
-    tagFilter: MessageTagFilter,
-    statusFilter: MessageReplyStatusFilter,
-    searchTerm: string
-  ) => {
-    setLoading(true);
-    try {
-      const data = await fetchAdminMessages(
-        targetPage,
-        PAGE_SIZE,
-        tagFilter,
-        statusFilter,
-        searchTerm
-      );
-      setMessages(data.messages);
-      setTotal(data.total);
-      setTotalPages(Math.max(1, data.totalPages));
-      setStats(data.stats);
-      if (data.currentPage !== targetPage) {
-        setPage(data.currentPage);
-      }
-    } catch (error) {
-      toast.error(parseMessageError(error));
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (data?.currentPage && data.currentPage !== page) {
+      setPage(data.currentPage);
     }
-  };
+  }, [data?.currentPage, page]);
 
   useEffect(() => {
-    loadMessages(page, tag, replyStatus, debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, tag, replyStatus, debouncedSearch]);
+    if (isError && error) {
+      toast.error(parseMessageError(error));
+    }
+  }, [isError, error]);
 
   const statsData = useMemo(
     () => ({
@@ -135,17 +123,16 @@ const UserMessagesContent = () => {
       return;
     }
 
-    setSubmittingReply(true);
     try {
-      await replyToMessage(selected.id, replyText.trim());
+      await replyMutation.mutateAsync({
+        id: selected.id,
+        reply: replyText.trim(),
+      });
       toast.success('Reply sent successfully!');
       setSelected(null);
       setReplyText('');
-      loadMessages(page, tag, replyStatus, debouncedSearch);
-    } catch (error) {
-      toast.error(parseMessageError(error));
-    } finally {
-      setSubmittingReply(false);
+    } catch (err) {
+      toast.error(parseMessageError(err));
     }
   };
 
@@ -154,8 +141,6 @@ const UserMessagesContent = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
@@ -186,7 +171,7 @@ const UserMessagesContent = () => {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => loadMessages(page, tag, replyStatus, debouncedSearch)}
+              onClick={() => refetch()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
             >

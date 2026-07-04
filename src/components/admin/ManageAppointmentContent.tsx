@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   CalendarCheck,
   Search,
@@ -23,11 +23,12 @@ import Pagination from '@/components/common/Pagination';
 import {
   AdminAppointment,
   ProfileAppointmentStatus,
-  fetchAdminAppointments,
-  updateAppointmentStatusAdmin,
   parseAppointmentError,
-  type AppointmentListStats,
 } from '@/services/appointmentService';
+import {
+  useAdminAppointmentsQuery,
+  useUpdateAppointmentStatusMutation,
+} from '@/hooks/queries';
 
 const statusStyles: Record<ProfileAppointmentStatus, string> = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -56,20 +57,27 @@ const statusOptions: ProfileAppointmentStatus[] = [
 const PAGE_SIZE = 10;
 
 const ManageAppointmentContent = () => {
-  const [appointments, setAppointments] = useState<AdminAppointment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | ProfileAppointmentStatus>('all');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [selected, setSelected] = useState<AdminAppointment | null>(null);
-  const [stats, setStats] = useState<AppointmentListStats | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
 
-  // Debounce the raw search input (400ms) and trim leading/trailing spaces so a
-  // request only fires once the user pauses typing.
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+  } = useAdminAppointmentsQuery(page, PAGE_SIZE, filter, debouncedSearch);
+  const updateStatusMutation = useUpdateAppointmentStatusMutation();
+
+  const appointments = data?.appointments ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const stats = data?.stats ?? null;
+
   useEffect(() => {
     const handle = setTimeout(() => {
       setDebouncedSearch(search.trim());
@@ -77,42 +85,17 @@ const ManageAppointmentContent = () => {
     return () => clearTimeout(handle);
   }, [search]);
 
-  // Fetch a single page (10 items) from the server, applying the status filter
-  // and debounced search. The backend keeps total/totalPages accurate for them.
-  const loadAppointments = async (
-    targetPage: number,
-    statusFilter: 'all' | ProfileAppointmentStatus,
-    searchTerm: string
-  ) => {
-    setLoading(true);
-    try {
-      const data = await fetchAdminAppointments(
-        targetPage,
-        PAGE_SIZE,
-        statusFilter,
-        searchTerm
-      );
-      setAppointments(data.appointments);
-      setTotal(data.total);
-      setTotalPages(Math.max(1, data.totalPages));
-      setStats(data.stats);
-      // If the server reports fewer pages than the requested page (e.g. after
-      // deletions or a narrower filter), snap back to the last valid page.
-      if (data.currentPage !== targetPage) {
-        setPage(data.currentPage);
-      }
-    } catch (error) {
-      const parsed = parseAppointmentError(error);
-      toast.error(parsed.message);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (data?.currentPage && data.currentPage !== page) {
+      setPage(data.currentPage);
     }
-  };
+  }, [data?.currentPage, page]);
 
   useEffect(() => {
-    loadAppointments(page, filter, debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, filter, debouncedSearch]);
+    if (isError && error) {
+      toast.error(parseAppointmentError(error).message);
+    }
+  }, [isError, error]);
 
   const statsData = useMemo(
     () => ({
@@ -135,18 +118,15 @@ const ManageAppointmentContent = () => {
 
     setUpdatingId(id);
     try {
-      const updated = await updateAppointmentStatusAdmin(id, status);
+      const updated = await updateStatusMutation.mutateAsync({ id, status });
       const nextStatus = (updated?.status as ProfileAppointmentStatus) || status;
 
-      setAppointments((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: nextStatus } : a))
-      );
       setSelected((prev) =>
         prev && prev.id === id ? { ...prev, status: nextStatus } : prev
       );
       toast.success(`Appointment marked as ${statusLabels[nextStatus]}`);
-    } catch (error) {
-      const parsed = parseAppointmentError(error);
+    } catch (err) {
+      const parsed = parseAppointmentError(err);
       toast.error(parsed.message);
     } finally {
       setUpdatingId(null);
@@ -163,8 +143,6 @@ const ManageAppointmentContent = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {[
@@ -198,7 +176,7 @@ const ManageAppointmentContent = () => {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="button"
-              onClick={() => loadAppointments(page, filter, debouncedSearch)}
+              onClick={() => refetch()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
             >

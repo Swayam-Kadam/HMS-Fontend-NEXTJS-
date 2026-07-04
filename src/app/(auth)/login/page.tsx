@@ -5,7 +5,7 @@ import { Formik, Form } from "formik";
 import { loginSchema } from "@/utils/validation";
 import FormInput from "@/components/ui/FormInput";
 import Link from "next/link";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import { useRouter, useSearchParams } from "next/navigation";
 import { loginRequest } from "@/utils/auth";
 import { getDefaultRedirect } from "@/conf/routes.config";
@@ -145,19 +145,6 @@ const LoginForm = () => {
 
   return (
     <>
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-      
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

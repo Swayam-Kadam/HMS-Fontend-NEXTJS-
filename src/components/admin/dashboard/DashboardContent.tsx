@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -32,11 +32,8 @@ import {
   RotateCw,
 } from 'lucide-react';
 import StatCard from './StatCard';
-import {
-  fetchDashboardStats,
-  parseDashboardError,
-  type DashboardStats,
-} from '@/services/dashboardService';
+import { parseDashboardError, type DashboardStats } from '@/services/dashboardService';
+import { useDashboardStatsQuery } from '@/hooks/queries';
 
 const STATUS_CONFIG: {
   key: keyof DashboardStats['appointmentStatus'];
@@ -92,26 +89,8 @@ const buildStatusChartData = (status: DashboardStats['appointmentStatus']) => {
 };
 
 const DashboardContent = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const loadStats = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchDashboardStats();
-      setStats(data);
-    } catch (err) {
-      setError(parseDashboardError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStats();
-  }, []);
+  const { data: stats, isLoading: loading, error, refetch } = useDashboardStatsQuery();
+  const errorMessage = error ? parseDashboardError(error) : null;
 
   const appointmentStatusData = useMemo(
     () => (stats ? buildStatusChartData(stats.appointmentStatus) : []),
@@ -146,16 +125,16 @@ const DashboardContent = () => {
     );
   }
 
-  if (error || !stats) {
+  if (errorMessage || !stats) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24">
         <span className="inline-flex items-center gap-2 text-red-600 text-sm font-medium">
           <AlertCircle size={18} />
-          {error ?? 'Unable to load dashboard.'}
+          {errorMessage ?? 'Unable to load dashboard.'}
         </span>
         <button
           type="button"
-          onClick={loadStats}
+          onClick={() => refetch()}
           className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition"
         >
           <RotateCw size={14} />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   Search,
   Users,
@@ -21,13 +21,12 @@ import Pagination from '@/components/common/Pagination';
 import EditUserModal from './EditUserModal';
 import Swal from '@/lib/swal';
 import {
-  fetchAllUsers,
   updateUser,
-  deleteUser,
   parseUserError,
   type UserProfile,
   type UserListStats,
 } from '@/services/profileService';
+import { useAdminUsersQuery, useDeleteUserMutation } from '@/hooks/queries';
 
 const ALL_GROUPS = 'all';
 const PAGE_SIZE = 10;
@@ -77,58 +76,38 @@ const UserAvatar = ({ user }: { user: UserProfile }) => {
 };
 
 const ManageUserContent = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [bloodGroup, setBloodGroup] = useState<string>(ALL_GROUPS);
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [editing, setEditing] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [statistics, setStatistics] = useState<UserListStats | null>(null);
 
-  const loadUsers = async (
-    targetPage: number,
-    groupFilter: string,
-    searchTerm: string
-  ) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchAllUsers({
-        page: targetPage,
-        limit: PAGE_SIZE,
-        bloodGroup: groupFilter === ALL_GROUPS ? undefined : groupFilter,
-        search: searchTerm,
-      });
-      setUsers(data.users);
-      setTotal(data.total);
-      setStatistics(data.stats);
-      setTotalPages(data.totalPages);
-      if (data.currentPage !== targetPage) {
-        setPage(data.currentPage);
-      }
-    } catch {
-      setError('Unable to load users. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    refetch,
+  } = useAdminUsersQuery(page, PAGE_SIZE, bloodGroup, debouncedSearch);
+  const deleteUserMutation = useDeleteUserMutation();
 
-  // Debounce the search input (400ms) + trim leading/trailing spaces.
+  const users = data?.users ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const statistics = data?.stats ?? null;
+  const error = isError ? 'Unable to load users. Please try again.' : null;
+
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search.trim()), 400);
     return () => clearTimeout(handle);
   }, [search]);
 
   useEffect(() => {
-    loadUsers(page, bloodGroup, debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, bloodGroup, debouncedSearch]);
+    if (data?.currentPage && data.currentPage !== page) {
+      setPage(data.currentPage);
+    }
+  }, [data?.currentPage, page]);
 
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
@@ -139,8 +118,7 @@ const ManageUserContent = () => {
       await updateUser(id, formData);
       toast.success('User updated successfully');
       setEditing(null);
-      // Reload so server-side filters/search stay consistent with the edit.
-      loadUsers(page, bloodGroup, debouncedSearch);
+      refetch();
     } catch (err) {
       toast.error(parseUserError(err));
     } finally {
@@ -164,14 +142,13 @@ const ManageUserContent = () => {
 
     setDeletingId(user.id);
     try {
-      await deleteUser(user.id);
+      await deleteUserMutation.mutateAsync(user.id);
       toast.success('User deleted successfully');
-      // If the last row on a page was removed, step back a page.
       const nextPage = users.length === 1 && page > 1 ? page - 1 : page;
       if (nextPage !== page) {
         setPage(nextPage);
       } else {
-        loadUsers(page, bloodGroup, debouncedSearch);
+        refetch();
       }
     } catch (err) {
       toast.error(parseUserError(err));
@@ -182,8 +159,6 @@ const ManageUserContent = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
@@ -218,7 +193,7 @@ const ManageUserContent = () => {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => loadUsers(page, bloodGroup, debouncedSearch)}
+              onClick={() => refetch()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
             >
@@ -290,7 +265,7 @@ const ManageUserContent = () => {
                       </span>
                       <button
                         type="button"
-                        onClick={() => loadUsers(page, bloodGroup, debouncedSearch)}
+                        onClick={() => refetch()}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition"
                       >
                         <RotateCw size={14} />

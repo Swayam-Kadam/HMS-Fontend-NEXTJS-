@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   User,
   Mail,
@@ -123,8 +123,6 @@ const AddDoctorForm = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       <div className="max-w-6xl mx-auto">
         {/* Page intro */}
         <div className="mb-6">

@@ -1,7 +1,7 @@
 // app/(user)/layout.tsx
 import { headers } from 'next/headers';
 import UserHeader from '@/layout/UserHeader';
-import UserFotter from '@/layout/UserFotter';
+import UserFooter from '@/layout/UserFooter';
 import { cookies } from 'next/headers';
 import { AUTH_REFRESH_COOKIE, AUTH_TOKEN_COOKIE } from '@/lib/auth/cookies';
 
@@ -23,7 +23,7 @@ export default async function UserLayout({
       <main className="min-h-screen bg-gray-50">
         {children}
       </main>
-      <UserFotter/>
+      <UserFooter />
     </>
   );
 }

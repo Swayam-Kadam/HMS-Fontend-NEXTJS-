@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   Search,
   Stethoscope,
@@ -18,14 +18,16 @@ import Pagination from '@/components/common/Pagination';
 import EditDoctorModal from './EditDoctorModal';
 import Swal from '@/lib/swal';
 import {
-  fetchDoctors,
   getDepartments,
-  updateDoctor,
-  deleteDoctor,
   parseDoctorError,
   type Doctor,
   type UpdateDoctorPayload,
 } from '@/services/doctorService';
+import {
+  useAdminDoctorsQuery,
+  useDeleteDoctorMutation,
+  useUpdateDoctorMutation,
+} from '@/hooks/queries';
 
 const ALL_DEPARTMENTS = 'all';
 const PAGE_SIZE = 10;
@@ -74,44 +76,29 @@ const DoctorAvatar = ({ doctor }: { doctor: Doctor }) => {
 };
 
 const ManageDoctorContent = () => {
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [department, setDepartment] = useState<string>(ALL_DEPARTMENTS);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Doctor | null>(null);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Loads doctors, optionally with a server-side search term.
-  const loadDoctors = async (searchTerm = '') => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchDoctors(searchTerm);
-      setDoctors(data);
-    } catch {
-      setError('Unable to load doctors. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: doctors = [],
+    isLoading: loading,
+    isError,
+    refetch,
+  } = useAdminDoctorsQuery(debouncedSearch);
+  const updateDoctorMutation = useUpdateDoctorMutation();
+  const deleteDoctorMutation = useDeleteDoctorMutation();
+  const saving = updateDoctorMutation.isPending;
+  const error = isError ? 'Unable to load doctors. Please try again.' : null;
 
-  // Debounce the search input (400ms) + trim leading/trailing spaces.
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search.trim()), 400);
     return () => clearTimeout(handle);
   }, [search]);
 
-  // Fetch from the server whenever the debounced search term changes.
-  useEffect(() => {
-    loadDoctors(debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
-
-  // Reset to first page whenever filters change.
   useEffect(() => {
     setPage(1);
   }, [department, debouncedSearch]);
@@ -126,16 +113,12 @@ const ManageDoctorContent = () => {
   }, [doctors, department]);
 
   const handleSaveEdit = async (id: string, payload: UpdateDoctorPayload) => {
-    setSaving(true);
     try {
-      const updated = await updateDoctor(id, payload);
-      setDoctors((prev) => prev.map((d) => (d.id === id ? updated : d)));
+      await updateDoctorMutation.mutateAsync({ id, payload });
       toast.success('Doctor updated successfully');
       setEditing(null);
     } catch (err) {
       toast.error(parseDoctorError(err));
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -155,8 +138,7 @@ const ManageDoctorContent = () => {
 
     setDeletingId(doctor.id);
     try {
-      await deleteDoctor(doctor.id);
-      setDoctors((prev) => prev.filter((d) => d.id !== doctor.id));
+      await deleteDoctorMutation.mutateAsync(doctor.id);
       toast.success('Doctor deleted successfully');
     } catch (err) {
       toast.error(parseDoctorError(err));
@@ -183,7 +165,6 @@ const ManageDoctorContent = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -217,7 +198,7 @@ const ManageDoctorContent = () => {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => loadDoctors(debouncedSearch)}
+              onClick={() => refetch()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
             >
@@ -283,7 +264,7 @@ const ManageDoctorContent = () => {
                       </span>
                       <button
                         type="button"
-                        onClick={() => loadDoctors(debouncedSearch)}
+                        onClick={() => refetch()}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition"
                       >
                         <RotateCw size={14} />

@@ -6,6 +6,7 @@ type PageMetadataOptions = {
   description: string;
   path: string;
   image?: string;
+  private?: boolean;
 };
 
 export function buildPageMetadata({
@@ -13,6 +14,7 @@ export function buildPageMetadata({
   description,
   path,
   image = DEFAULT_OG_IMAGE,
+  private: isPrivate = false,
 }: PageMetadataOptions): Metadata {
   const url = path.startsWith('/') ? path : `/${path}`;
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
@@ -20,6 +22,7 @@ export function buildPageMetadata({
   return {
     title,
     description,
+    ...(isPrivate ? { robots: { index: false, follow: false } } : {}),
     alternates: {
       canonical: url,
     },

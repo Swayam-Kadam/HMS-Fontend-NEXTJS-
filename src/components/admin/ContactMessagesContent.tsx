@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import {
   Mail,
   Search,
@@ -22,12 +22,12 @@ import {
   CONTACT_SUBJECTS,
   ContactReadFilter,
   ContactSubjectFilter,
-  fetchAdminContacts,
-  updateContactReadStatus,
   parseContactError,
-  ContactListStats,
-  type AdminContactsPage,
 } from '@/services/contactService';
+import {
+  useAdminContactsQuery,
+  useUpdateContactReadStatusMutation,
+} from '@/hooks/queries';
 
 const PAGE_SIZE = 10;
 
@@ -38,56 +38,44 @@ const readFilterOptions: { value: ContactReadFilter; label: string }[] = [
 ];
 
 const ContactMessagesContent = () => {
-  const [contacts, setContacts] = useState<AdminContact[]>([]);
-  const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [subject, setSubject] = useState<ContactSubjectFilter>('all');
   const [readStatus, setReadStatus] = useState<ContactReadFilter>('all');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [selected, setSelected] = useState<AdminContact | null>(null);
-  const [stats, setStats] = useState<ContactListStats | null>(null);
-  // Debounce the search input (400ms) + trim leading/trailing spaces.
+
+  const {
+    data,
+    isLoading: loading,
+    isError,
+    error,
+    refetch,
+  } = useAdminContactsQuery(page, PAGE_SIZE, subject, readStatus, debouncedSearch);
+  const updateReadMutation = useUpdateContactReadStatusMutation();
+
+  const contacts = data?.contacts ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.totalPages ?? 1);
+  const stats = data?.stats ?? null;
+
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search.trim()), 400);
     return () => clearTimeout(handle);
   }, [search]);
 
-  const loadContacts = async (
-    targetPage: number,
-    subjectFilter: ContactSubjectFilter,
-    readFilter: ContactReadFilter,
-    searchTerm: string
-  ) => {
-    setLoading(true);
-    try {
-      const data: AdminContactsPage = await fetchAdminContacts(
-        targetPage,
-        PAGE_SIZE,
-        subjectFilter,
-        readFilter,
-        searchTerm);
-      setContacts(data.contacts);
-      setTotal(data.total);
-      setTotalPages(Math.max(1, data.totalPages));
-      setStats(data.stats);
-      if (data.currentPage !== targetPage) {
-        setPage(data.currentPage);
-      }
-    } catch (error) {
-      toast.error(parseContactError(error));
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (data?.currentPage && data.currentPage !== page) {
+      setPage(data.currentPage);
     }
-  };
+  }, [data?.currentPage, page]);
 
   useEffect(() => {
-    loadContacts(page, subject, readStatus, debouncedSearch);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, subject, readStatus, debouncedSearch]);
+    if (isError && error) {
+      toast.error(parseContactError(error));
+    }
+  }, [isError, error]);
 
   const statsData = useMemo(
     () => ({
@@ -110,16 +98,13 @@ const ContactMessagesContent = () => {
     }
     setUpdatingId(contact.id);
     try {
-      await updateContactReadStatus(contact.id, read);
-      setContacts((prev) =>
-        prev.map((c) => (c.id === contact.id ? { ...c, read } : c))
-      );
+      await updateReadMutation.mutateAsync({ id: contact.id, read });
       setSelected((prev) =>
         prev && prev.id === contact.id ? { ...prev, read } : prev
       );
       return true;
-    } catch (error) {
-      toast.error(parseContactError(error));
+    } catch (err) {
+      toast.error(parseContactError(err));
       return false;
     } finally {
       setUpdatingId(null);
@@ -151,8 +136,6 @@ const ContactMessagesContent = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
@@ -183,7 +166,7 @@ const ContactMessagesContent = () => {
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => loadContacts(page, subject, readStatus, debouncedSearch)}
+              onClick={() => refetch()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
             >

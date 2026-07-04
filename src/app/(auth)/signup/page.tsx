@@ -4,9 +4,8 @@ import { Formik, Form, type FormikHelpers } from "formik";
 import { signupSchema } from "@/utils/validation";
 import FormInput from "@/components/ui/FormInput";
 import Link from "next/link";
-import { useAppDispatch } from "@/store/hooks";
-import { toast, ToastContainer } from "react-toastify";
-import { signup } from "@/store/slices/authSlice";
+import { toast } from "react-toastify";
+import { signupRequest } from "@/utils/auth";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -130,7 +129,6 @@ const passwordStrengthVariants: Variants = {
 };
 
 const SignupPage = () => {
-  const dispatch = useAppDispatch();
   const router = useRouter();
 
   const initialValues: SignupValues = {
@@ -152,34 +150,19 @@ const SignupPage = () => {
     };
 
     try {
-      const res = await dispatch(signup(payload)).unwrap();
-      if (res.status === 200 || res.status === 201) {
-        toast.success("Account created successfully! Please login.");
-        resetForm();
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      }
-    } catch {
-      // Error toast is handled in the auth thunk.
+      await signupRequest(payload);
+      toast.success("Account created successfully! Please login.");
+      resetForm();
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Signup failed');
     }
   };
 
   return (
     <>
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-      
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
