@@ -285,30 +285,3 @@ See [docs/TANSTACK_QUERY.md](docs/TANSTACK_QUERY.md) for the full step-by-step g
 
 **Backend:** Deploy Express API separately (e.g. Render, Railway) and set `NEXT_PUBLIC_API_URL` to the production API URL.
 
----
-
-## Future improvements
-
-- [ ] Automated tests (unit + E2E)
-- [ ] Convert `AppointmentForm.jsx` to TypeScript
-- [ ] Forgot-password page
-- [ ] Individual doctor detail pages with dynamic metadata
-- [ ] CI/CD pipeline (GitHub Actions)
-
----
-
-## License
-
-This project is for portfolio and educational purposes.
-
----
-
-## Author
-
-**Your Name**
-
-- GitHub: [@your-username](https://github.com/your-username)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/your-profile)
-- Email: your.email@example.com
-
-> Replace the Author section with your actual links before sharing with recruiters.
