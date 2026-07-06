@@ -17,20 +17,9 @@ import {
 import ImageHospital from '../../../public/images/Apollo-Hospital.webp'
 import Image from 'next/image';
 import Button from '@/components/ui/Button';
-import ImageDoctor1 from '../../../public/images/doctors/image1.png';
-import ImageDoctor2 from '../../../public/images/doctors/image2.png';
-import ImageDoctor3 from '../../../public/images/doctors/image3.png';
-import ImageDoctor4 from '../../../public/images/doctors/image4.png';
+import { FEATURED_DOCTORS, FEATURED_DOCTOR_COUNT } from '@/lib/static/featuredDoctors';
 
-
-import type { Doctor } from '@/services/doctorService';
-
-interface HomeContentProps {
-  featuredDoctors: Doctor[];
-  doctorCount: number;
-}
-
-const HomeContent = ({ featuredDoctors, doctorCount }: HomeContentProps) => {
+const HomeContent = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -66,7 +55,7 @@ const HomeContent = ({ featuredDoctors, doctorCount }: HomeContentProps) => {
                 <p className="text-blue-200">Years Experience</p>
               </div>
               <div>
-                <p className="text-3xl font-bold">{doctorCount > 0 ? `${doctorCount}+` : '50+'}</p>
+                <p className="text-3xl font-bold">{FEATURED_DOCTOR_COUNT}+</p>
                 <p className="text-blue-200">Expert Doctors</p>
               </div>
               <div>
@@ -155,62 +144,14 @@ const HomeContent = ({ featuredDoctors, doctorCount }: HomeContentProps) => {
           </div>
           
           <div className="grid md:grid-cols-4 gap-6">
-            {(featuredDoctors.length > 0
-              ? featuredDoctors.slice(0, 4).map((doctor) => ({
-                  name: doctor.fullName,
-                  specialty: doctor.department,
-                  experience: doctor.department,
-                  img: doctor.imageUrl,
-                  isRemote: true,
-                }))
-              : [
-                  {
-                    name: 'Dr. chang ching',
-                    specialty: 'Oncology',
-                    experience: '15+ years experience',
-                    img: ImageDoctor1,
-                    isRemote: false,
-                  },
-                  {
-                    name: 'Dr. Sneha Reddy',
-                    specialty: 'Dermatology',
-                    experience: '12+ years experience',
-                    img: ImageDoctor2,
-                    isRemote: false,
-                  },
-                  {
-                    name: 'Dr. Amelia Harper',
-                    specialty: 'ENT',
-                    experience: '10+ years experience',
-                    img: ImageDoctor3,
-                    isRemote: false,
-                  },
-                  {
-                    name: 'Dr. Naveen Kumar',
-                    specialty: 'General',
-                    experience: '18+ years experience',
-                    img: ImageDoctor4,
-                    isRemote: false,
-                  },
-                ]
-            ).map((doctor) => (
+            {FEATURED_DOCTORS.map((doctor) => (
               <div key={doctor.name} className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition">
                 <div className="relative w-full h-64 bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900">
-                  {doctor.isRemote ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={doctor.img as string}
-                      alt={doctor.name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Image src={doctor.img as typeof ImageDoctor1} alt={doctor.name} fill className="object-cover" />
-                  )}
+                  <Image src={doctor.image} alt={doctor.name} fill className="object-cover" />
                 </div>
                 <div className="p-6">
                   <h3 className="text-xl font-bold text-gray-800">{doctor.name}</h3>
-                  <p className="text-blue-600 mb-2">{doctor.specialty}</p>
-                  <p className="text-gray-600 text-sm capitalize">{doctor.experience}</p>
+                  <p className="text-blue-600 mb-2">{doctor.department}</p>
                   <div className="flex gap-2 mt-4">
                     <Button 
                     style="flex-1 bg-blue-900 text-white py-2 rounded-lg text-sm hover:bg-blue-800 cursor-pointer"

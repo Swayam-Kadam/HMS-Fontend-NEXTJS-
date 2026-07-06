@@ -13,7 +13,7 @@ This project demonstrates modern full-stack web development patterns used in ind
 - **Backend-for-Frontend (BFF)** auth with HttpOnly cookies (no JWT in `localStorage`)
 - **Next.js App Router** with route groups, middleware, and API routes
 - **TanStack Query** for cached client-side API state (profile, admin, appointments)
-- **ISR (Incremental Static Regeneration)** for public pages like doctors and donations
+- **SSG** for the home, about, and contact pages; **ISR** for doctors and donations
 - **Role-based access** — `user` (patient) and `admin` dashboards
 - **Stripe** integration for appointment payments
 - **Open Graph metadata**, `robots.txt`, and `sitemap.xml` for shareable URLs and SEO
@@ -227,7 +227,8 @@ npm run dev
 
 | Pages | Strategy | Why |
 |-------|----------|-----|
-| `/`, `/doctors`, `/donation` | **ISR** (server fetch + 60s revalidate) | SEO + fast public data |
+| `/`, `/details`, `/contact-us` | **SSG** (static at build time) | Fast landing + about pages |
+| `/doctors`, `/donation` | **ISR** (server fetch + 60s revalidate) | SEO + fresh public data |
 | `/login`, `/signup` | **CSR** (client components) | Interactive forms |
 | `/profile`, `/dashboard`, admin | **SSG shell + TanStack Query** | Auth-gated dynamic data |
 | Auth API routes | **Server** (Route Handlers) | Secure cookie handling |

@@ -1,6 +1,5 @@
 import HomeContent from '@/components/home/HomeContent';
 import { buildPageMetadata } from '@/lib/metadata';
-import { fetchDoctorsServer } from '@/lib/server/doctors';
 
 export const metadata = buildPageMetadata({
   title: 'Exceptional Healthcare',
@@ -10,10 +9,6 @@ export const metadata = buildPageMetadata({
   image: '/images/Apollo-Hospital.webp',
 });
 
-export default async function HomePage() {
-  const doctors = await fetchDoctorsServer();
-
-  return (
-    <HomeContent featuredDoctors={doctors} doctorCount={doctors.length} />
-  );
+export default function HomePage() {
+  return <HomeContent />;
 }
