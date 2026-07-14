@@ -62,6 +62,12 @@ export const fetchDoctors = async (search?: string): Promise<Doctor[]> => {
   return data.map(mapApiDoctor);
 };
 
+/** Fetches a single doctor via GET /api/doctor/:id. */
+export const fetchDoctorById = async (id: string): Promise<Doctor> => {
+  const { data } = await axiosReact.get<ApiDoctor>(DOCTOR_BY_ID(id));
+  return mapApiDoctor(data);
+};
+
 export const getDepartments = (doctors: Doctor[]): string[] => {
   const seen = new Map<string, string>();
   doctors.forEach((doctor) => {

@@ -12,3 +12,10 @@ export async function fetchDoctorsServer(search?: string): Promise<Doctor[]> {
   if (!data) return [];
   return data.map(mapApiDoctor);
 }
+
+/** Fetches a single doctor by Mongo `_id` for public detail pages. */
+export async function fetchDoctorByIdServer(id: string): Promise<Doctor | null> {
+  const data = await serverGet<ApiDoctor>(`/doctor/${id}`);
+  if (!data) return null;
+  return mapApiDoctor(data);
+}

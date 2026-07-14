@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   Stethoscope,
   Search,
@@ -67,18 +68,21 @@ const DoctorAvatar = ({ doctor }: { doctor: Doctor }) => {
 };
 
 const DoctorCard = ({ doctor }: { doctor: Doctor }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group">
+  <Link
+    href={`/doctors/${doctor.id}`}
+    className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all overflow-hidden group block"
+  >
     <DoctorAvatar doctor={doctor} />
     <div className="p-5">
-      <h4 className="font-bold text-gray-900 capitalize truncate text-lg">{doctor.fullName}</h4>
+      <h4 className="font-bold text-gray-900 capitalize truncate text-lg group-hover:text-blue-600 transition-colors">
+        {doctor.fullName}
+      </h4>
       <p className="text-blue-600 text-sm font-medium mb-4">{doctor.department}</p>
 
       <div className="space-y-2.5 text-sm">
         <div className="flex items-center gap-2.5 text-gray-600">
           <Mail size={14} className="text-gray-400 shrink-0" />
-          <a href={`mailto:${doctor.email}`} className="truncate hover:text-blue-600 hover:underline">
-            {doctor.email}
-          </a>
+          <span className="truncate">{doctor.email}</span>
         </div>
         <div className="flex items-center gap-2.5 text-gray-600">
           <Calendar size={14} className="text-gray-400 shrink-0" />
@@ -94,7 +98,7 @@ const DoctorCard = ({ doctor }: { doctor: Doctor }) => (
         </div>
       </div>
     </div>
-  </div>
+  </Link>
 );
 
 const DoctorsContent = ({ initialDoctors }: { initialDoctors?: Doctor[] }) => {
