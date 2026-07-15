@@ -7,7 +7,7 @@ import {
 } from '@/lib/auth/cookies';
 import {
   AUTH_REDIRECT_ROUTES,
-  getDefaultRedirect,
+  getSafeRedirect,
   isAdminRoute,
   isAuthRequiredRoute,
   isPublicRoute,
@@ -30,7 +30,10 @@ export function middleware(request: NextRequest) {
     });
 
   if (AUTH_REDIRECT_ROUTES.includes(pathname) && isAuthenticated) {
-    const redirectPath = getDefaultRedirect(role ?? null);
+    const redirectPath = getSafeRedirect(
+      request.nextUrl.searchParams.get('redirect'),
+      role ?? null
+    );
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 

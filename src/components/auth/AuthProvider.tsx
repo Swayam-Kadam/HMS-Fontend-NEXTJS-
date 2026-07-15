@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import SessionRefresh from './SessionRefresh';
 import { fetchSession } from '@/utils/auth';
-import { AUTH_REDIRECT_ROUTES, getDefaultRedirect } from '@/conf/routes.config';
+import { AUTH_REDIRECT_ROUTES, getSafeRedirect } from '@/conf/routes.config';
 import type { UserRole } from '@/conf/routes.config';
 import {
   AuthSessionProvider,
@@ -43,7 +43,12 @@ const AuthProvider = ({ children }: AuthProviderProps) => {
         if (cancelled) return;
 
         if (AUTH_REDIRECT_ROUTES.includes(pathname) && session.authenticated) {
-          router.replace(getDefaultRedirect(session.role as UserRole));
+          const redirectParam = new URLSearchParams(
+            window.location.search
+          ).get('redirect');
+          router.replace(
+            getSafeRedirect(redirectParam, session.role as UserRole)
+          );
           resolveSessionGate();
           return;
         }

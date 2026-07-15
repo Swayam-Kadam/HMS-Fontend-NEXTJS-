@@ -6,9 +6,9 @@ import { loginSchema } from "@/utils/validation";
 import FormInput from "@/components/ui/FormInput";
 import Link from "next/link";
 import { toast } from "react-toastify";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { loginRequest } from "@/utils/auth";
-import { getDefaultRedirect } from "@/conf/routes.config";
+import { getSafeRedirect } from "@/conf/routes.config";
 import type { UserRole } from "@/conf/routes.config";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,7 +18,6 @@ interface LoginValues {
 }
 
 const LoginForm = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const initialValues: LoginValues = {
@@ -35,13 +34,12 @@ const LoginForm = () => {
       toast.success("Login Successfully");
       resetForm();
 
-      const redirect = searchParams.get("redirect");
-      const destination =
-        redirect && redirect.startsWith("/")
-          ? redirect
-          : getDefaultRedirect(role as UserRole);
-
-      router.push(destination);
+      const destination = getSafeRedirect(
+        searchParams.get("redirect"),
+        role as UserRole
+      );
+      // Full navigation so auth cookies are present for middleware (avoids Vercel race).
+      window.location.assign(destination);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Login failed"
@@ -257,6 +255,27 @@ const LoginForm = () => {
                     className="text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Sign Up
+                  </Link>
+                </motion.span>
+              </motion.p>
+
+
+              <motion.p 
+                variants={itemVariants}
+                className="text-center mt-1 text-sm text-gray-600"
+              >
+                Back to{" "}
+                <motion.span
+                  variants={linkVariants}
+                  initial="rest"
+                  whileHover="hover"
+                  className="inline-block"
+                >
+                  <Link
+                    href="/"
+                    className="text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    Home
                   </Link>
                 </motion.span>
               </motion.p>

@@ -58,5 +58,22 @@ export const getDefaultRedirect = (role: UserRole): string => {
   return '/';
 };
 
+/** Prefer `redirect` query when it is a same-origin relative path; otherwise role default. */
+export const getSafeRedirect = (
+  redirect: string | null | undefined,
+  role: UserRole
+): string => {
+  if (
+    redirect &&
+    redirect.startsWith('/') &&
+    !redirect.startsWith('//') &&
+    !redirect.startsWith('/login') &&
+    !redirect.startsWith('/signup')
+  ) {
+    return redirect;
+  }
+  return getDefaultRedirect(role);
+};
+
 export const requiresAuth = (path: string): boolean =>
   isAuthRequiredRoute(path) || isAdminRoute(path);

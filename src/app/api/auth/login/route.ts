@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import conf from '@/conf/conf';
 import { setAuthCookies } from '@/lib/auth/cookies';
 import { LOGIN } from '@/services/url';
@@ -33,8 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cookieStore = await cookies();
-    setAuthCookies(cookieStore, {
+    const res = NextResponse.json({ ok: true, role });
+    setAuthCookies(res.cookies, {
       token,
       role,
       refresh:
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
         data?.refresh,
     });
 
-    return NextResponse.json({ ok: true, role });
+    return res;
   } catch {
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
   }
