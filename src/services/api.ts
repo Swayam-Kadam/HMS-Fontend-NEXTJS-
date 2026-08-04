@@ -56,8 +56,13 @@ class Axios {
       }
 
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-      const redirect = encodeURIComponent(window.location.pathname);
-      window.location.href = `/login?redirect=${redirect}`;
+      const path = window.location.pathname;
+      // Avoid /login?redirect=/login when a 401 happens on the auth pages.
+      if (path === '/login' || path === '/signup') {
+        window.location.href = '/login';
+      } else {
+        window.location.href = `/login?redirect=${encodeURIComponent(path)}`;
+      }
     }
 
     return Promise.reject(error);

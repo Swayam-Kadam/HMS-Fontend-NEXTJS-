@@ -1,6 +1,6 @@
 # Apollo Hospital Management System
 
-A full-stack **Hospital Management System (HMS)** built with **Next.js 16** and an **Express** backend. The app includes a public hospital website, patient portal, and admin dashboard — with production-grade **BFF authentication**, **TanStack Query** for client data, and **SEO** optimizations.
+A full-stack **Hospital Management System (HMS)** built with **Next.js 16** and an **Express** backend. The app includes a public hospital website, patient portal, and admin dashboard — with production-grade **BFF authentication**, **TanStack Query** for client data, **Socket.IO support chat**, and **SEO** optimizations.
 
 **Live demo:** [https://hms-fontend-nextjs.vercel.app](https://hms-fontend-nextjs.vercel.app)
 
@@ -41,6 +41,7 @@ This project demonstrates modern full-stack web development patterns used in ind
 | Book appointment (with Stripe checkout) | `/appointment` |
 | View / cancel / edit appointments | `/profile` (appointments tab) |
 | Send messages & feedback to hospital | `/profile` (messages tab) |
+| Live support chat with admin | `/support` |
 
 ### Admin dashboard (authenticated admin)
 
@@ -50,6 +51,7 @@ This project demonstrates modern full-stack web development patterns used in ind
 | Add / manage doctors | `/add-doctor`, `/manage-doctor` |
 | Manage registered users | `/manage-user` |
 | Manage all appointments & update status | `/manage-appointment` |
+| Live support inbox (Socket.IO) | `/support-inbox` |
 | Reply to patient messages | `/user-messages` |
 | View contact form submissions | `/contact-messages` |
 
@@ -71,6 +73,7 @@ This project demonstrates modern full-stack web development patterns used in ind
 | [Recharts](https://recharts.org/) | Admin dashboard charts |
 | [Framer Motion](https://www.framer.com/motion/) | Login/signup animations |
 | [Stripe.js](https://stripe.com/) | Appointment payment checkout |
+| [Socket.IO client](https://socket.io/) | Realtime support chat |
 | [Lucide React](https://lucide.dev/) | Icons |
 
 ### Backend (separate Express repo)
@@ -80,6 +83,7 @@ This project demonstrates modern full-stack web development patterns used in ind
 | Node.js + Express | REST API |
 | MongoDB | Database |
 | JWT + refresh tokens | Auth (access 15 min, refresh 7 days) |
+| Socket.IO | Realtime support chat rooms + ack delivery |
 
 ### DevOps & tooling
 
@@ -104,6 +108,7 @@ Browser
                                       │
                                Middleware (route guard)
                                Auth Context (session UI)
+                               Socket.IO ← /api/auth/socket-token (JWT for handshake)
 ```
 
 | Concern | Implementation |
@@ -111,6 +116,7 @@ Browser
 | Public SEO data | ISR via `src/lib/server/fetch.ts` (`revalidate: 60`) |
 | Auth session | HttpOnly cookies + `AuthProvider` (Context) |
 | Client API data | TanStack Query hooks in `src/hooks/queries.ts` |
+| Support chat | REST history + Socket.IO live updates (`src/lib/socket.ts`) |
 | Route protection | Edge middleware + `src/conf/routes.config.ts` |
 | Social sharing | Open Graph, canonical URLs, `metadataBase` |
 | Crawlers | `src/app/robots.ts`, `src/app/sitemap.ts` |
@@ -132,14 +138,14 @@ hospital_management_system/
 │   │   ├── (admin)/         # Admin dashboard routes
 │   │   ├── (auth)/          # Login & signup
 │   │   └── api/
-│   │       ├── auth/        # Login, logout, session, refresh
+│   │       ├── auth/        # Login, logout, session, refresh, socket-token
 │   │       └── proxy/       # BFF proxy to Express API
-│   ├── components/          # Feature UI (admin, profile, forms, …)
+│   ├── components/          # Feature UI (admin, profile, support, forms, …)
 │   ├── hooks/
 │   │   ├── queries.ts       # TanStack Query hooks
 │   │   └── useAuthQueryEnabled.ts
-│   ├── services/            # API modules (doctor, appointment, …)
-│   ├── lib/                 # Auth, metadata, server fetchers
+│   ├── services/            # API modules (doctor, appointment, supportChat, …)
+│   ├── lib/                 # Auth, metadata, socket, server fetchers
 │   ├── conf/                # Env + route ACL config
 │   └── middleware.ts        # Edge auth & redirects
 ├── docs/
@@ -149,6 +155,36 @@ hospital_management_system/
 ├── .env.example
 └── package.json
 ```
+
+---
+
+## Support chat (Socket.IO)
+
+Logged-in patients use **`/support`**. Admins use **`/support-inbox`**.
+
+### How it works
+
+1. REST loads conversation list + message history (source of truth).
+2. Browser calls same-origin `GET /api/auth/socket-token` to obtain the access JWT for the handshake (cookie stays HttpOnly for normal API calls).
+3. `socket.io-client` connects to `NEXT_PUBLIC_SOCKET_URL` (API host **without** `/api`).
+4. Sends use `support:sendMessage` with **callback ack** → UI states `sending → sent → failed` (retry supported).
+5. Room broadcast updates the other participant; reconnect refetches REST history.
+
+### Rules baked into the backend
+
+- Only **one active** conversation per user (`open` / `waiting_for_*` block a second create).
+- Admin inbox indexed by `{ status, lastMessageAt }`.
+- Messages ordered by `createdAt` then `_id`.
+- Per-user send throttle on the socket handler.
+
+### Env for chat
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+```
+
+Backend must run Socket.IO from the same Express HTTP server (see backend `README.md`).
 
 ---
 
@@ -185,6 +221,7 @@ Edit `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key
 ```
@@ -214,6 +251,7 @@ npm run dev
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Express backend base URL (e.g. `http://localhost:3001/api`) |
+| `NEXT_PUBLIC_SOCKET_URL` | Socket.IO origin without `/api` (e.g. `http://localhost:3001`) |
 | `NEXT_PUBLIC_SITE_URL` | Public site URL for SEO, OG tags, sitemap |
 | `NEXT_PUBLIC_COOKIE_PATH` | Cookie path (default `/`) |
 | `NEXT_PUBLIC_COOKIE_DOMAIN` | Cookie domain |

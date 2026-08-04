@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Hospital,
   CalendarCheck,
+  Headphones,
 } from 'lucide-react';
 import Logo from '../../../public/images/logo.svg';
 import { logoutRequest } from '@/utils/auth';
@@ -25,6 +26,7 @@ const navItems = [
   { label: 'Manage Appointment', href: '/manage-appointment', icon: CalendarCheck },
   { label: 'Manage Doctor', href: '/manage-doctor', icon: Stethoscope },
   { label: 'Manage User', href: '/manage-user', icon: Users },
+  { label: 'Support Inbox', href: '/support-inbox', icon: Headphones },
   { label: 'User Messages', href: '/user-messages', icon: MessageSquare },
   { label: 'Contact Messages', href: '/contact-messages', icon: Mail },
 ];

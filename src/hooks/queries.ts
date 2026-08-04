@@ -31,6 +31,17 @@ import {
   type MessageTagFilter,
 } from '@/services/messageService';
 import {
+  assignSupportConversation,
+  createSupportConversation,
+  fetchAdminSupportConversations,
+  fetchMySupportConversations,
+  fetchSupportMessages,
+  markSupportConversationRead,
+  updateSupportConversationStatus,
+  type AdminSupportStatusFilter,
+  type SupportConversationStatus,
+} from '@/services/supportChatService';
+import {
   deleteUser,
   fetchAllUsers,
   fetchUser,
@@ -272,6 +283,112 @@ export function useReplyToMessageMutation() {
       replyToMessage(id, reply),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+    },
+  });
+}
+
+export function useMySupportConversationsQuery(active = true) {
+  const enabled = useAuthQueryEnabled() && active;
+  return useQuery({
+    queryKey: queryKeys.supportConversationsMe,
+    queryFn: fetchMySupportConversations,
+    enabled,
+  });
+}
+
+export function useSupportMessagesQuery(
+  conversationId: string | null,
+  active = true
+) {
+  const enabled = useAuthQueryEnabled() && active && Boolean(conversationId);
+  return useQuery({
+    queryKey: queryKeys.supportMessages(conversationId || 'none'),
+    queryFn: () => fetchSupportMessages(conversationId!),
+    enabled,
+  });
+}
+
+export function useCreateSupportConversationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createSupportConversation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.supportConversationsMe,
+      });
+    },
+  });
+}
+
+export function useMarkSupportReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: markSupportConversationRead,
+    onSuccess: (conversation) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.supportConversationsMe,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-support-conversations'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.supportMessages(conversation.id),
+      });
+    },
+  });
+}
+
+export function useAdminSupportConversationsQuery(
+  page: number,
+  limit: number,
+  status: AdminSupportStatusFilter,
+  search: string,
+  unreadOnly: boolean
+) {
+  const enabled = useAuthQueryEnabled();
+  return useQuery({
+    queryKey: queryKeys.adminSupportConversations(
+      page,
+      limit,
+      status,
+      search,
+      unreadOnly
+    ),
+    queryFn: () =>
+      fetchAdminSupportConversations(page, limit, status, search, unreadOnly),
+    enabled,
+  });
+}
+
+export function useAssignSupportConversationMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assignSupportConversation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['admin-support-conversations'],
+      });
+    },
+  });
+}
+
+export function useUpdateSupportStatusMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: SupportConversationStatus;
+    }) => updateSupportConversationStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['admin-support-conversations'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.supportConversationsMe,
+      });
     },
   });
 }

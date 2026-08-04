@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import ActiveLink from '@/components/activeLink/ActiveLink';
 import Image from 'next/image';
 import Logo from '../../public/images/logo.svg';
-import { ChevronDown, Clock, LogOut, Mail, Menu, Phone, User } from 'lucide-react';
+import { ChevronDown, Clock, Headphones, LogOut, Mail, Menu, Phone, User } from 'lucide-react';
 import { logoutRequest } from '@/utils/auth';
 import { useAuthSession } from '@/context/AuthSessionContext';
 import { useProfileQuery } from '@/hooks/queries';
@@ -34,6 +34,7 @@ const UserHeader: React.FC<HeaderProps> = ({
     { label: 'Appointment', href: '/appointment' },
     { label: 'Doctors', href: '/doctors' },
     { label: 'Donation', href: '/donation' },
+    { label: 'Support', href: '/support' },
     { label: 'Profile', href: '/profile' },
     { label: 'Contact', href: '/contact-us' },
   ],
@@ -213,6 +214,14 @@ const UserHeader: React.FC<HeaderProps> = ({
                     >
                       <User size={16} />
                       Profile
+                    </Link>
+                    <Link
+                      href="/support"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Headphones size={16} />
+                      Support
                     </Link>
                     <button
                       type="button"

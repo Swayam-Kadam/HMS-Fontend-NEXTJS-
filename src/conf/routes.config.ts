@@ -14,7 +14,7 @@ export const PUBLIC_ROUTES = [
   '/unsuccess',
 ];
 
-export const AUTH_REQUIRED_ROUTES = ['/appointment', '/profile'];
+export const AUTH_REQUIRED_ROUTES = ['/appointment', '/profile', '/support'];
 
 export const AUTH_REDIRECT_ROUTES = ['/login', '/signup'];
 
@@ -26,6 +26,7 @@ export const ADMIN_ROUTES = [
   '/manage-appointment',
   '/user-messages',
   '/contact-messages',
+  '/support-inbox',
 ];
 
 export const isPublicRoute = (path: string): boolean =>
@@ -60,21 +61,45 @@ export const getDefaultRedirect = (role: UserRole): string => {
   return '/';
 };
 
-/** Prefer `redirect` query when it is a same-origin relative path; otherwise role default. */
+const isAuthPagePath = (path: string): boolean =>
+  path === '/login' ||
+  path.startsWith('/login?') ||
+  path === '/signup' ||
+  path.startsWith('/signup?');
+
+/**
+ * Prefer `redirect` query when it is a safe same-origin path for this role.
+ * Admins are not sent to patient routes (/profile, /support, …).
+ * Users are not sent to admin routes.
+ */
 export const getSafeRedirect = (
   redirect: string | null | undefined,
   role: UserRole
 ): string => {
+  const fallback = getDefaultRedirect(role);
+
   if (
-    redirect &&
-    redirect.startsWith('/') &&
-    !redirect.startsWith('//') &&
-    !redirect.startsWith('/login') &&
-    !redirect.startsWith('/signup')
+    !redirect ||
+    !redirect.startsWith('/') ||
+    redirect.startsWith('//') ||
+    isAuthPagePath(redirect)
   ) {
-    return redirect;
+    return fallback;
   }
-  return getDefaultRedirect(role);
+
+  if (role === 'admin') {
+    if (isAdminRoute(redirect)) {
+      return redirect;
+    }
+    // Ignore patient deep-links for admins (e.g. ?redirect=/profile).
+    return fallback;
+  }
+
+  if (role === 'user' && isAdminRoute(redirect)) {
+    return fallback;
+  }
+
+  return redirect;
 };
 
 export const requiresAuth = (path: string): boolean =>

@@ -18,6 +18,17 @@ export const MESSAGE_SEND = "/message/send";
 export const MESSAGE_USER = "/message/specific-user";
 export const MESSAGE_FETCH = "/message/fetch";
 export const MESSAGE_REPLY = (id: string) => `/message/message-update/${id}`;
+export const SUPPORT_CONVERSATIONS = "/support/conversations";
+export const SUPPORT_CONVERSATIONS_ME = "/support/conversations/me";
+export const SUPPORT_CONVERSATION_MESSAGES = (id: string) =>
+  `/support/conversations/${id}/messages`;
+export const SUPPORT_CONVERSATION_READ = (id: string) =>
+  `/support/conversations/${id}/read`;
+export const SUPPORT_ADMIN_CONVERSATIONS = "/support/admin/conversations";
+export const SUPPORT_ADMIN_ASSIGN = (id: string) =>
+  `/support/admin/conversations/${id}/assign`;
+export const SUPPORT_ADMIN_STATUS = (id: string) =>
+  `/support/admin/conversations/${id}/status`;
 export const CONTACT_SEND = "/contact/send";
 export const CONTACT_GET = "/contact/get";
 export const CONTACT_READ_STATUS = (id: string) => `/contact/read-status/${id}`;
