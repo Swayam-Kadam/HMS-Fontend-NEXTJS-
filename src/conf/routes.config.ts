@@ -8,6 +8,8 @@ export const PUBLIC_ROUTES = [
   '/contact-us',
   '/login',
   '/signup',
+  '/terms',
+  '/privacy',
   '/success',
   '/unsuccess',
 ];

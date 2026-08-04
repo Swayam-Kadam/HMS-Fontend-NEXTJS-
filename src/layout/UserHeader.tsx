@@ -3,11 +3,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import ActiveLink from '@/components/activeLink/ActiveLink';
 import Image from 'next/image';
 import Logo from '../../public/images/logo.svg';
 import { ChevronDown, Clock, LogOut, Mail, Menu, Phone, User } from 'lucide-react';
 import { logoutRequest } from '@/utils/auth';
+import { useAuthSession } from '@/context/AuthSessionContext';
+import { useProfileQuery } from '@/hooks/queries';
+import { queryKeys } from '@/lib/query-keys';
 
 interface NavItem {
   label: string;
@@ -38,9 +42,24 @@ const UserHeader: React.FC<HeaderProps> = ({
   isLoggedIn = false,
 }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { sessionReady, authenticated } = useAuthSession();
+  const loggedIn = sessionReady ? authenticated : isLoggedIn;
+  const { data: profile } = useProfileQuery();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [avatarErrored, setAvatarErrored] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const displayName = profile?.name?.trim() || userName || 'User';
+  const avatarUrl = profile?.userImage?.trim() || userAvatar?.trim() || '';
+  const showAvatar = Boolean(avatarUrl) && !avatarErrored;
+  const avatarInitial = displayName.charAt(0).toUpperCase() || 'U';
+
+  useEffect(() => {
+    setAvatarErrored(false);
+  }, [avatarUrl]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -60,6 +79,7 @@ const UserHeader: React.FC<HeaderProps> = ({
     setLoggingOut(true);
     try {
       await logoutRequest();
+      queryClient.removeQueries({ queryKey: queryKeys.profile });
       setDropdownOpen(false);
       router.push('/login');
       router.refresh();
@@ -68,7 +88,19 @@ const UserHeader: React.FC<HeaderProps> = ({
     }
   };
 
-  const avatarInitial = userName.charAt(0).toUpperCase();
+  const avatarNode = showAvatar ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={avatarUrl}
+      alt={displayName}
+      onError={() => setAvatarErrored(true)}
+      className="w-8 h-8 rounded-full object-cover shrink-0"
+    />
+  ) : (
+    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0">
+      <span className="text-sm font-medium text-white">{avatarInitial}</span>
+    </div>
+  );
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
@@ -90,7 +122,7 @@ const UserHeader: React.FC<HeaderProps> = ({
             <Link href="/" className="flex items-center">
               <Image
                 src={Logo}
-                alt="Picture of the author"
+                alt="Apollo Hospital logo"
                 width={70}
                 height={500}
               />
@@ -128,7 +160,7 @@ const UserHeader: React.FC<HeaderProps> = ({
                       </ActiveLink>
                     </div>
                   ))}
-                  {!isLoggedIn ? (
+                  {!loggedIn ? (
                     <Link
                       href="/login"
                       className="block px-3 py-2 text-base font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 text-center"
@@ -150,39 +182,28 @@ const UserHeader: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {isLoggedIn ? (
+            {loggedIn ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"
                   onClick={() => setDropdownOpen((open) => !open)}
-                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-2 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="flex items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pl-1 pr-2.5 hover:bg-gray-50 transition-colors cursor-pointer max-w-[12rem]"
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
                 >
-                  {userAvatar ? (
-                    <img
-                      src={userAvatar}
-                      alt={userName}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                      <span className="text-sm font-medium text-white">
-                        {avatarInitial}
-                      </span>
-                    </div>
-                  )}
+                  {avatarNode}
                   <ChevronDown
                     size={16}
-                    className={`text-gray-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                    className={`text-gray-500 shrink-0 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50">
-                    <div className="border-b border-gray-100 px-4 py-2">
+                  <div className="absolute right-0 mt-2 w-52 rounded-lg border border-gray-200 bg-white py-1 shadow-lg z-50">
+                    <div className="border-b border-gray-100 px-4 py-2.5 flex items-center gap-3">
+                      {avatarNode}
                       <p className="text-sm font-medium text-gray-900 truncate">
-                        {userName}
+                        {displayName}
                       </p>
                     </div>
                     <Link
