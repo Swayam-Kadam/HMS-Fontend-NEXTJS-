@@ -37,14 +37,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(redirectPath, request.url));
   }
 
+  // Already logged in but landed on authorize gate → go to intended page.
+  if (pathname === '/authorize' && isAuthenticated) {
+    const redirectPath = getSafeRedirect(
+      request.nextUrl.searchParams.get('redirect'),
+      role ?? null
+    );
+    return NextResponse.redirect(new URL(redirectPath, request.url));
+  }
+
   if (isPublicRoute(pathname)) {
     return createResponse();
   }
 
   if (isAuthRequiredRoute(pathname) && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+    const authorizeUrl = new URL('/authorize', request.url);
+    authorizeUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(authorizeUrl);
   }
 
   if (isAdminRoute(pathname)) {

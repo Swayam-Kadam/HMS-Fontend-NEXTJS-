@@ -8,6 +8,7 @@ export const PUBLIC_ROUTES = [
   '/contact-us',
   '/login',
   '/signup',
+  '/authorize',
   '/terms',
   '/privacy',
   '/success',
@@ -65,7 +66,9 @@ const isAuthPagePath = (path: string): boolean =>
   path === '/login' ||
   path.startsWith('/login?') ||
   path === '/signup' ||
-  path.startsWith('/signup?');
+  path.startsWith('/signup?') ||
+  path === '/authorize' ||
+  path.startsWith('/authorize?');
 
 /**
  * Prefer `redirect` query when it is a safe same-origin path for this role.
