@@ -1,5 +1,6 @@
 import UserHeader from '@/layout/UserHeader';
 import UserFooter from '@/layout/UserFooter';
+import ChatbotWidget from '@/components/chatbot/ChatbotWidget';
 
 export default function UserLayout({
   children,
@@ -11,6 +12,7 @@ export default function UserLayout({
       <UserHeader />
       <main className="min-h-screen bg-gray-50">{children}</main>
       <UserFooter />
+      <ChatbotWidget />
     </>
   );
 }

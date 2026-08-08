@@ -29,6 +29,7 @@ export const SUPPORT_ADMIN_ASSIGN = (id: string) =>
   `/support/admin/conversations/${id}/assign`;
 export const SUPPORT_ADMIN_STATUS = (id: string) =>
   `/support/admin/conversations/${id}/status`;
+export const CHATBOT_MESSAGE = "/chatbot/message";
 export const CONTACT_SEND = "/contact/send";
 export const CONTACT_GET = "/contact/get";
 export const CONTACT_READ_STATUS = (id: string) => `/contact/read-status/${id}`;
