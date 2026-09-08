@@ -27,7 +27,9 @@ import {
 } from '@/services/appointmentService';
 import {
   useAdminAppointmentsQuery,
+  useStatusChangeEmailQuery,
   useUpdateAppointmentStatusMutation,
+  useUpdateStatusChangeEmailMutation,
 } from '@/hooks/queries';
 
 const statusStyles: Record<ProfileAppointmentStatus, string> = {
@@ -72,6 +74,10 @@ const ManageAppointmentContent = () => {
     refetch,
   } = useAdminAppointmentsQuery(page, PAGE_SIZE, filter, debouncedSearch);
   const updateStatusMutation = useUpdateAppointmentStatusMutation();
+  const emailSettingQuery = useStatusChangeEmailQuery();
+  const emailSettingMutation = useUpdateStatusChangeEmailMutation();
+  const emailServiceOn = emailSettingQuery.data ?? true;
+  const emailBusy = emailSettingQuery.isLoading || emailSettingMutation.isPending;
 
   const appointments = data?.appointments ?? [];
   const total = data?.total ?? 0;
@@ -182,6 +188,46 @@ const ManageAppointmentContent = () => {
             >
               <RotateCw size={15} className={loading ? 'animate-spin' : ''} />
               Refresh
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const next = !emailServiceOn;
+                try {
+                  const result = await emailSettingMutation.mutateAsync(next);
+                  toast.success(
+                    result.message ||
+                      (next
+                        ? 'Status change emails are now enabled'
+                        : 'Status change emails are now disabled')
+                  );
+                } catch (err) {
+                  toast.error(parseAppointmentError(err).message);
+                }
+              }}
+              disabled={emailBusy}
+              aria-pressed={emailServiceOn}
+              className={`inline-flex items-center justify-center gap-2.5 px-4 py-2.5 border rounded-xl text-sm font-medium transition disabled:opacity-60 ${
+                emailServiceOn
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              <Mail size={15} />
+              Email
+              <span
+                className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition ${
+                  emailServiceOn ? 'bg-emerald-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${
+                    emailServiceOn ? 'left-4' : 'left-0.5'
+                  }`}
+                />
+              </span>
+              {emailServiceOn ? 'On' : 'Off'}
             </button>
             <select
               value={filter}

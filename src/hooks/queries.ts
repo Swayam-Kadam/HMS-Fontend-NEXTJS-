@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   cancelAppointment,
   fetchAdminAppointments,
+  fetchStatusChangeEmailSetting,
   fetchUserAppointments,
   updateAppointmentStatusAdmin,
+  updateStatusChangeEmailSetting,
   type AppointmentStatusFilter,
   type ProfileAppointmentStatus,
 } from '@/services/appointmentService';
@@ -246,6 +248,28 @@ export function useAdminContactsQuery(
     queryKey: queryKeys.adminContacts(page, limit, subject, readStatus, search),
     queryFn: () => fetchAdminContacts(page, limit, subject, readStatus, search),
     enabled,
+  });
+}
+
+export function useStatusChangeEmailQuery() {
+  const enabled = useAuthQueryEnabled();
+  return useQuery({
+    queryKey: queryKeys.statusChangeEmail,
+    queryFn: fetchStatusChangeEmailSetting,
+    enabled,
+  });
+}
+
+export function useUpdateStatusChangeEmailMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateStatusChangeEmailSetting,
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        queryKeys.statusChangeEmail,
+        data.statusChangeEmailEnabled
+      );
+    },
   });
 }
 

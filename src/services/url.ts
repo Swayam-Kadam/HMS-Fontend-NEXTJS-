@@ -12,6 +12,7 @@ export const APPOINTMENT_EDIT = (id: string) => `/appointment/appo/${id}`;
 export const APPOINTMENT_UPDATE_STATUS = (id: string) =>
   `/appointment/update-status/${id}`;
 export const APPOINTMENT_CHECKOUT = "/appointment/create-checkout-session";
+export const APPOINTMENT_VERIFY_PAYMENT = "/appointment/verify-payment";
 export const DOCTORS = "/doctor";
 export const DOCTOR_BY_ID = (id: string) => `/doctor/${id}`;
 export const MESSAGE_SEND = "/message/send";
@@ -35,3 +36,4 @@ export const CONTACT_GET = "/contact/get";
 export const CONTACT_READ_STATUS = (id: string) => `/contact/read-status/${id}`;
 export const DONATION_DONATORS = "/donation/donators";
 export const DASHBOARD_STATS = "/dashboard/stats";
+export const STATUS_EMAIL_SETTING = "/settings/status-email";

@@ -3,7 +3,9 @@ import {
   APPOINTMENT,
   APPOINTMENT_CANCEL,
   APPOINTMENT_CHECKOUT,
+  APPOINTMENT_VERIFY_PAYMENT,
   APPOINTMENT_EDIT,
+  STATUS_EMAIL_SETTING,
   APPOINTMENT_UPDATE_STATUS,
   APPOINTMENT_USER,
 } from '@/services/url';
@@ -288,11 +290,22 @@ export const createAppointment = async (
 };
 
 export const createCheckoutSession = async (
-  appointment: CreateAppointmentPayload[]
+  appointment: CreateAppointmentPayload[],
+  appointmentId: string
 ): Promise<{ id: string; url?: string }> => {
   const { data } = await axiosReact.post<{ id: string; url?: string }>(
     APPOINTMENT_CHECKOUT,
-    { appointment }
+    { appointment, appointmentId }
+  );
+  return data;
+};
+
+export const verifyAppointmentPayment = async (
+  sessionId: string
+): Promise<{ message: string; emailSent?: boolean }> => {
+  const { data } = await axiosReact.post<{ message: string; emailSent?: boolean }>(
+    APPOINTMENT_VERIFY_PAYMENT,
+    { sessionId }
   );
   return data;
 };
@@ -429,6 +442,23 @@ export const updateAppointmentStatusAdmin = async (
     updatedAppointment: ApiAppointment;
   }>(APPOINTMENT_UPDATE_STATUS(id), { status });
   return data.updatedAppointment;
+};
+
+export const fetchStatusChangeEmailSetting = async (): Promise<boolean> => {
+  const { data } = await axiosReact.get<{ statusChangeEmailEnabled: boolean }>(
+    STATUS_EMAIL_SETTING
+  );
+  return Boolean(data?.statusChangeEmailEnabled);
+};
+
+export const updateStatusChangeEmailSetting = async (
+  enabled: boolean
+): Promise<{ message: string; statusChangeEmailEnabled: boolean }> => {
+  const { data } = await axiosReact.patch<{
+    message: string;
+    statusChangeEmailEnabled: boolean;
+  }>(STATUS_EMAIL_SETTING, { enabled });
+  return data;
 };
 
 export interface AppointmentActionError {

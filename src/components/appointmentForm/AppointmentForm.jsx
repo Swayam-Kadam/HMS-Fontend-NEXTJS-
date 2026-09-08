@@ -131,7 +131,7 @@ const AppointmentForm = () => {
     };
 
     try {
-      await createAppointment(payload);
+      const result = await createAppointment(payload);
 
       const stripeKey = conf.stripePublishableKey;
       if (!stripeKey || stripeKey === "undefined") {
@@ -146,7 +146,7 @@ const AppointmentForm = () => {
         return;
       }
 
-      const session = await createCheckoutSession([payload]);
+      const session = await createCheckoutSession([payload], result._id);
       if (session?.url) {
         window.location.href = session.url;
         return;
