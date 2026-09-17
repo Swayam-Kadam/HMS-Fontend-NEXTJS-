@@ -323,8 +323,15 @@ const SupportChatContent = () => {
 
   const closed = selected?.status === 'closed';
 
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
   return (
     <div className="container mx-auto max-w-6xl px-4 pb-16 -mt-10 relative z-10">
+      <div ref={bottomRef}/>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">

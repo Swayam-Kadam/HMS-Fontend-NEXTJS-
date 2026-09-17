@@ -51,6 +51,11 @@ import {
 } from '@/services/profileService';
 import { queryKeys } from '@/lib/query-keys';
 import { useAuthQueryEnabled } from '@/hooks/useAuthQueryEnabled';
+import {
+  endVideoCall,
+  fetchVideoStatus,
+  fetchVideoToken,
+} from '@/services/videoService';
 
 export function useProfileQuery() {
   const enabled = useAuthQueryEnabled();
@@ -414,5 +419,26 @@ export function useUpdateSupportStatusMutation() {
         queryKey: queryKeys.supportConversationsMe,
       });
     },
+  });
+}
+
+export function useVideoStatusQuery(appointmentId: string) {
+  const enabled = useAuthQueryEnabled();
+  return useQuery({
+    queryKey: queryKeys.videoStatus(appointmentId),
+    queryFn: () => fetchVideoStatus(appointmentId),
+    enabled: enabled && Boolean(appointmentId),
+  });
+}
+
+export function useVideoTokenMutation() {
+  return useMutation({
+    mutationFn: (appointmentId: string) => fetchVideoToken(appointmentId),
+  });
+}
+
+export function useEndVideoCallMutation() {
+  return useMutation({
+    mutationFn: (appointmentId: string) => endVideoCall(appointmentId),
   });
 }

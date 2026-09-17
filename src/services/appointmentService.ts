@@ -109,6 +109,7 @@ export interface ProfileAppointment {
   department: string;
   doctor: string;
   status: ProfileAppointmentStatus;
+  appointmentType: string;
   date: string;
   time: string;
   doctorImage: StaticImageData;
@@ -201,6 +202,7 @@ export const mapApiAppointmentToProfile = (
     department: appointment.department,
     doctor: appointment.doctor,
     status: normalizeAppointmentStatus(appointment.status),
+    appointmentType: appointment.appointmentType || '',
     date: dateSource ? formatDisplayDate(dateSource) : '—',
     time: appointment.preferredTime || '—',
     doctorImage: getDepartmentImage(appointment.department),

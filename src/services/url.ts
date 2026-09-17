@@ -37,3 +37,6 @@ export const CONTACT_READ_STATUS = (id: string) => `/contact/read-status/${id}`;
 export const DONATION_DONATORS = "/donation/donators";
 export const DASHBOARD_STATS = "/dashboard/stats";
 export const STATUS_EMAIL_SETTING = "/settings/status-email";
+export const VIDEO_TOKEN = (appointmentId: string) => `/video/token/${appointmentId}`;
+export const VIDEO_STATUS = (appointmentId: string) => `/video/status/${appointmentId}`;
+export const VIDEO_END = (appointmentId: string) => `/video/end/${appointmentId}`;

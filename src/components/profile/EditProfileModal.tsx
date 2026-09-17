@@ -217,6 +217,7 @@ const EditProfileModal = ({
             <input
               type="date"
               value={toDateInputValue(form.dateOfBirth)}
+              max={new Date().toISOString().slice(0, 10)}
               onChange={(e) => handleChange('dateOfBirth', e.target.value)}
               className={inputClass}
               required

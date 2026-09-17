@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'react-toastify';
 import {
   CalendarCheck,
@@ -17,6 +18,7 @@ import {
   BadgeCheck,
   Loader2,
   RotateCw,
+  Video,
 } from 'lucide-react';
 import AdminModal from './AdminModal';
 import Pagination from '@/components/common/Pagination';
@@ -466,6 +468,18 @@ const ManageAppointmentContent = () => {
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Notes</p>
                 <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-4">{selected.notes}</p>
               </div>
+            )}
+
+            {selected.appointmentType === 'Video Consult' && selected.status === 'accepted' && (
+              <Link
+                href={`/appointment/${selected.id}/video`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                <Video size={16} />
+                Join Video Call
+              </Link>
             )}
           </div>
         )}

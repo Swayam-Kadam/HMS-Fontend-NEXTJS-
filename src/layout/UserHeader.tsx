@@ -7,7 +7,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import ActiveLink from '@/components/activeLink/ActiveLink';
 import Image from 'next/image';
 import Logo from '../../public/images/logo.svg';
-import { ChevronDown, Clock, Headphones, LogOut, Mail, Menu, Phone, User } from 'lucide-react';
+import { ChevronDown, Clock, Headphones, Loader2, LogOut, Mail, Menu, Phone, User } from 'lucide-react';
 import { logoutRequest } from '@/utils/auth';
 import { useAuthSession } from '@/context/AuthSessionContext';
 import { useProfileQuery } from '@/hooks/queries';
@@ -183,7 +183,14 @@ const UserHeader: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {loggedIn ? (
+            {!sessionReady ? (
+              <div
+                className="flex h-9 w-9 items-center justify-center"
+                aria-label="Loading account"
+              >
+                <Loader2 size={20} className="animate-spin text-blue-600" />
+              </div>
+            ) : loggedIn ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   type="button"

@@ -21,10 +21,14 @@ import {
   Shield,
   Activity,
   Ban,
+  Loader2,
+  Video,
+  Eye,
 } from 'lucide-react';
 import Pagination from '@/components/common/Pagination';
 import EditProfileModal from './EditProfileModal';
 import EditAppointmentModal from './EditAppointmentModal';
+import ViewAppointmentDetailModal from './ViewAppointmentDetailModal';
 import { type UserProfile } from '@/services/profileService';
 import {
   parseAppointmentError,
@@ -52,6 +56,7 @@ import {
 
 import PatientImage from '../../../public/images/about/patient.jpg';
 import HospitalImage from '../../../public/images/Apollo-Hospital.webp';
+import Button from '../ui/Button';
 
 interface Appointment extends ProfileAppointment {}
 
@@ -141,6 +146,7 @@ const StarRating = ({
 const ProfileContent = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [actionAppointmentId, setActionAppointmentId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('all');
   const [messagePage, setMessagePage] = useState(1);
@@ -171,6 +177,7 @@ const ProfileContent = () => {
 
   const messageCountQuery = useMessageCountQuery();
   const messageTotal = messageCountQuery.data ?? 0;
+  const statsLoading = appointmentsLoading || messageCountQuery.isLoading;
 
   const messagesQuery = useUserMessagesQuery(
     messagePage,
@@ -293,6 +300,10 @@ const ProfileContent = () => {
     }
   };
 
+  const handleViewDetail = (appointment: Appointment) => {
+    setViewingAppointment(appointment);
+  };
+
   return (
     <div className="container mx-auto px-4 max-w-7xl -mt-16 sm:-mt-20 relative z-10 pb-16">
       {profileLoading ? (
@@ -385,7 +396,7 @@ const ProfileContent = () => {
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${stat.iconBg}`}>
               <stat.icon size={20} className={stat.iconColor} />
             </div>
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-2xl font-bold text-gray-900">{statsLoading ? <Loader2 size={20} className="animate-spin" /> : stat.value}</p>
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{stat.label}</p>
           </div>
         ))}
@@ -484,7 +495,7 @@ const ProfileContent = () => {
               <p className="text-blue-200 text-xs font-semibold uppercase tracking-wider mb-3">Next Appointment</p>
               {appointments.filter((a) => a.status === 'accepted' || a.status === 'pending')[0] ? (
                 (() => {
-                  const next = appointments.find((a) => a.status === 'accepted' || a.status === 'pending')!;
+                  const next = appointments.find((a) => (a.status === 'accepted' || a.status === 'pending') && a.date >= new Date().toISOString().slice(0, 10))!;
                   return (
                     <>
                       <p className="font-bold text-lg mb-1">{next.doctor}</p>
@@ -493,18 +504,45 @@ const ProfileContent = () => {
                         <span className="flex items-center gap-1.5"><Calendar size={14} /> {next.date}</span>
                         <span className="flex items-center gap-1.5"><Clock size={14} /> {next.time}</span>
                       </div>
+
+                      <button
+                type="button"
+                onClick={() => setActiveTab('appointments')}
+                title="View all appointments"
+                aria-label="View all appointments"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg transition cursor-pointer"
+              >
+                View All <Calendar size={14} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleViewDetail(next)}
+                title="View details"
+                aria-label="View details"
+                className="mt-4 inline-flex items-center gap-2 ml-2 text-sm font-semibold bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg transition cursor-pointer"
+              >
+                View Details <Eye size={14} />
+              </button>
                     </>
                   );
                 })()
               ) : (
+                <>
                 <p className="text-blue-100">No upcoming appointments</p>
-              )}
-              <Link
-                href="/appointment"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg transition"
+                <button
+                type="button"
+                onClick={() => setActiveTab('appointments')}
+                title="View all appointments"
+                aria-label="View all appointments"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg transition cursor-pointer"
               >
                 View All <Calendar size={14} />
-              </Link>
+              </button>
+              </>
+              )}
+              
+
             </div>
           </div>
         </div>
@@ -649,6 +687,32 @@ const ProfileContent = () => {
                       <p className="text-sm font-medium text-gray-800">{appointment.name}</p>
                       <p className="text-xs text-gray-500">{appointment.email}</p>
                     </div>
+
+                    <div className="flex justify-between gap-2">
+                    {appointment.appointmentType === 'Video Consult' &&
+                      appointment.status === 'accepted' && (
+                        <Link
+                          href={`/appointment/${appointment.id}/video`}
+                          className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 cursor-pointer"
+                        >
+                          <Video size={16} />
+                          Join Video Call
+                        </Link>
+                        
+                      )}
+
+                        <button 
+                        type="button"
+                        onClick={() => handleViewDetail(appointment)}
+                        title="View Detail"
+                        aria-label="View Detail"
+                          className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 cursor-pointer"
+                        >
+                          <Eye size={16} />
+                          View Detail
+                        </button>
+                      
+                      </div>
                   </div>
                 </div>
               );
@@ -878,6 +942,12 @@ const ProfileContent = () => {
           onSaved={handleAppointmentUpdated}
         />
       )}
+
+      <ViewAppointmentDetailModal
+        open={!!viewingAppointment}
+        onClose={() => setViewingAppointment(null)}
+        appointment={viewingAppointment}
+      />
         </>
       )}
     </div>

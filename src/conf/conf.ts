@@ -10,6 +10,9 @@ const conf = {
       (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/?$/, '') ||
       'http://localhost:3001'
   ),
+  payloadEncryption:
+    String(process.env.NEXT_PUBLIC_PAYLOAD_ENCRYPTION || '').toLowerCase() === 'true',
+  payloadEncryptionKey: String(process.env.NEXT_PUBLIC_PAYLOAD_ENCRYPTION_KEY || ''),
 };
 
 export default conf;

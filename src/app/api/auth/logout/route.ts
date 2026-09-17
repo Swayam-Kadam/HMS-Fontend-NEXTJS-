@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import conf from '@/conf/conf';
 import { AUTH_REFRESH_COOKIE, clearAuthCookies } from '@/lib/auth/cookies';
+import {
+  encryptPayload,
+  isPayloadEncryptionEnabled,
+} from '@/lib/server/payloadCrypto';
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -10,10 +14,14 @@ export async function POST() {
   if (refreshToken) {
     const apiBase = conf.APIUrl.replace(/\/$/, '');
     try {
+      const requestBody = isPayloadEncryptionEnabled()
+        ? encryptPayload({ refreshToken })
+        : { refreshToken };
+
       await fetch(`${apiBase}/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify(requestBody),
       });
     } catch {
       // Best-effort revocation; still clear cookies locally.

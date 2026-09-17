@@ -34,7 +34,7 @@ export const isPublicRoute = (path: string): boolean =>
   PUBLIC_ROUTES.includes(path);
 
 export const isAuthRequiredRoute = (path: string): boolean =>
-  AUTH_REQUIRED_ROUTES.includes(path);
+  AUTH_REQUIRED_ROUTES.includes(path) || path.startsWith('/appointment/');
 
 export const isAdminRoute = (path: string): boolean =>
   ADMIN_ROUTES.includes(path) || path.startsWith('/admin');

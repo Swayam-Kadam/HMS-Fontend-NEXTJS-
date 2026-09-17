@@ -5,6 +5,12 @@ import {
   setAuthCookies,
   type AuthCookieStore,
 } from '@/lib/auth/cookies';
+import {
+  decryptPayload,
+  encryptPayload,
+  isEncryptedEnvelope,
+  isPayloadEncryptionEnabled,
+} from '@/lib/server/payloadCrypto';
 
 export async function tryRefreshTokens(
   cookieStore: AuthCookieStore
@@ -18,17 +24,31 @@ export async function tryRefreshTokens(
   const role = cookieStore.get?.(AUTH_ROLE_COOKIE)?.value ?? 'user';
   const apiBase = conf.APIUrl.replace(/\/$/, '');
 
+  const requestBody = isPayloadEncryptionEnabled()
+    ? encryptPayload({ refreshToken })
+    : { refreshToken };
+
   const backendRes = await fetch(`${apiBase}/auth/refresh`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
+    body: JSON.stringify(requestBody),
   });
 
-  const data = await backendRes.json().catch(() => ({}));
-  const payload = data?.data ?? data;
-  const token = payload?.authtoken ?? payload?.token ?? data?.authtoken;
+  let data: Record<string, unknown> = await backendRes.json().catch(() => ({}));
+  if (isPayloadEncryptionEnabled() && isEncryptedEnvelope(data)) {
+    data = decryptPayload(data) as Record<string, unknown>;
+  }
+
+  const payload = (data?.data ?? data) as Record<string, unknown>;
+  const token =
+    (payload?.authtoken as string | undefined) ??
+    (payload?.token as string | undefined) ??
+    (data?.authtoken as string | undefined);
   const newRefresh =
-    payload?.refreshToken ?? payload?.refresh ?? data?.refreshToken ?? data?.refresh;
+    (payload?.refreshToken as string | undefined) ??
+    (payload?.refresh as string | undefined) ??
+    (data?.refreshToken as string | undefined) ??
+    (data?.refresh as string | undefined);
 
   if (!backendRes.ok || !token) {
     return false;

@@ -321,7 +321,12 @@ const AppointmentForm = () => {
                       size={18}
                     />
                     <div className="[&_input]:pl-10">
-                      <FormInput name="dob" type="date" placeholder="" />
+                      <FormInput
+                        name="dob"
+                        type="date"
+                        placeholder=""
+                        max={new Date().toISOString().slice(0, 10)}
+                      />
                     </div>
                   </div>
                 </div>

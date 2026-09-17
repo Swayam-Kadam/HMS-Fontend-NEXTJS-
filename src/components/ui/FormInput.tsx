@@ -9,10 +9,11 @@ interface Props {
   type: string;
   placeholder: string;
   min?: string;
+  max?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const FormInput = ({ name, type, placeholder, min, onChange }: Props) => {
+const FormInput = ({ name, type, placeholder, min, max, onChange }: Props) => {
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -27,6 +28,7 @@ const FormInput = ({ name, type, placeholder, min, onChange }: Props) => {
               type={inputType}
               placeholder={placeholder}
               min={min}
+              max={max}
               onChange={(e) => {
                 field.onChange(e);
                 onChange?.(e);

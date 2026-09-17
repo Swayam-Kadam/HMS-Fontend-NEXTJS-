@@ -1,4 +1,9 @@
 import conf from '@/conf/conf';
+import {
+  decryptPayload,
+  isEncryptedEnvelope,
+  isPayloadEncryptionEnabled,
+} from '@/lib/server/payloadCrypto';
 
 const API_BASE = conf.APIUrl.replace(/\/$/, '');
 
@@ -22,7 +27,12 @@ export async function serverGet<T>(
       next: { revalidate },
     });
     if (!res.ok) return null;
-    return (await res.json()) as T;
+
+    let json: unknown = await res.json();
+    if (isPayloadEncryptionEnabled() && isEncryptedEnvelope(json)) {
+      json = decryptPayload(json);
+    }
+    return json as T;
   } catch {
     return null;
   }

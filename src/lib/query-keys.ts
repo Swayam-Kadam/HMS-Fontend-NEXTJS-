@@ -26,6 +26,7 @@ export const queryKeys = {
   ) => ['admin-contacts', page, limit, subject, readStatus, search] as const,
   dashboardStats: ['dashboard-stats'] as const,
   statusChangeEmail: ['status-change-email'] as const,
+  videoStatus: (appointmentId: string) => ['video-status', appointmentId] as const,
   supportConversationsMe: ['support-conversations-me'] as const,
   supportMessages: (conversationId: string) =>
     ['support-messages', conversationId] as const,

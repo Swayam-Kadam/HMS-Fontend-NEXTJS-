@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import conf from '@/conf/conf';
 import { setAuthCookies } from '@/lib/auth/cookies';
+import {
+  decryptPayload,
+  encryptPayload,
+  isEncryptedEnvelope,
+  isPayloadEncryptionEnabled,
+} from '@/lib/server/payloadCrypto';
 import { LOGIN } from '@/services/url';
 
 export async function POST(request: NextRequest) {
@@ -14,20 +20,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const requestBody = isPayloadEncryptionEnabled()
+      ? encryptPayload({ email, password })
+      : { email, password };
+
     const backendRes = await fetch(`${conf.APIUrl}${LOGIN}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(requestBody),
     });
 
-    const data = await backendRes.json().catch(() => ({}));
-    const payload = data?.data ?? data;
-    const token = payload?.authtoken ?? payload?.token ?? data?.authtoken;
-    const role = payload?.role ?? data?.role;
+    let data: Record<string, unknown> = await backendRes.json().catch(() => ({}));
+    if (isPayloadEncryptionEnabled() && isEncryptedEnvelope(data)) {
+      data = decryptPayload(data) as Record<string, unknown>;
+    }
+
+    const payload = (data?.data ?? data) as Record<string, unknown>;
+    const token =
+      (payload?.authtoken as string | undefined) ??
+      (payload?.token as string | undefined) ??
+      (data?.authtoken as string | undefined);
+    const role =
+      (payload?.role as string | undefined) ?? (data?.role as string | undefined);
 
     if (!backendRes.ok || !token || !role) {
       return NextResponse.json(
-        { error: data?.error || data?.message || 'Login failed' },
+        {
+          error:
+            (data?.error as string | undefined) ||
+            (data?.message as string | undefined) ||
+            'Login failed',
+        },
         { status: backendRes.status || 401 }
       );
     }
@@ -37,10 +60,10 @@ export async function POST(request: NextRequest) {
       token,
       role,
       refresh:
-        payload?.refreshToken ??
-        payload?.refresh ??
-        data?.refreshToken ??
-        data?.refresh,
+        (payload?.refreshToken as string | undefined) ??
+        (payload?.refresh as string | undefined) ??
+        (data?.refreshToken as string | undefined) ??
+        (data?.refresh as string | undefined),
     });
 
     return res;

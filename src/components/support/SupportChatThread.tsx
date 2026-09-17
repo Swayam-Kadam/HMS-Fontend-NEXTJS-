@@ -39,11 +39,11 @@ const SupportChatThread = ({
   typingLabel,
   emptyLabel = 'No messages yet. Start the conversation.',
 }: SupportChatThreadProps) => {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  // const bottomRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, typingLabel]);
+  // useEffect(() => {
+  //   bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  // }, [messages.length, typingLabel]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,8 +52,8 @@ const SupportChatThread = ({
   };
 
   return (
-    <div className="flex h-full min-h-[420px] flex-col rounded-2xl border border-gray-100 bg-white shadow-sm">
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-5">
+    <div className="flex h-full min-h-[420px] max-h-[500px] flex-col rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5 sm:px-5 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {messages.length === 0 ? (
           <div className="flex h-full min-h-[280px] items-center justify-center">
             <p className="text-sm text-gray-400">{emptyLabel}</p>
@@ -105,14 +105,14 @@ const SupportChatThread = ({
         {typingLabel && (
           <p className="text-xs text-gray-400 italic px-1">{typingLabel}</p>
         )}
-        <div ref={bottomRef} />
+        
       </div>
 
       <form
         onSubmit={handleSubmit}
         className="border-t border-gray-100 p-3 sm:p-4"
       >
-        <div className="flex items-end gap-2">
+        <div className="flex items-center gap-2">
           <textarea
             rows={2}
             value={draft}

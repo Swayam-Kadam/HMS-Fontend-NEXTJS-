@@ -1,4 +1,10 @@
 import type { UserRole } from '@/conf/routes.config';
+import {
+  decryptPayload,
+  encryptPayload,
+  isEncryptedEnvelope,
+  isPayloadEncryptionEnabled,
+} from '@/lib/payloadCrypto';
 
 export interface Session {
   authenticated: boolean;
@@ -38,17 +44,31 @@ export interface SignupPayload {
 }
 
 export async function signupRequest(payload: SignupPayload) {
+  const body = isPayloadEncryptionEnabled()
+    ? await encryptPayload(payload)
+    : payload;
+
   const res = await fetch('/api/proxy/auth/createuser/', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(isPayloadEncryptionEnabled() ? { 'X-Payload-Encrypted': '1' } : {}),
+    },
     credentials: 'include',
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
   });
 
-  const data = await res.json().catch(() => ({}));
+  let data: Record<string, unknown> = await res.json().catch(() => ({}));
+  if (isPayloadEncryptionEnabled() && isEncryptedEnvelope(data)) {
+    data = (await decryptPayload(data)) as Record<string, unknown>;
+  }
 
   if (!res.ok) {
-    throw new Error(data.error || data.message || 'Signup failed');
+    throw new Error(
+      (data.error as string | undefined) ||
+        (data.message as string | undefined) ||
+        'Signup failed'
+    );
   }
 
   return data;
